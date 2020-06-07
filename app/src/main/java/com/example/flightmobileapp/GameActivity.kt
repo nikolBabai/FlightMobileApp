@@ -1,5 +1,6 @@
 package com.example.flightmobileapp
 
-class GameActivity {
+import androidx.appcompat.app.AppCompatActivity
 
+class GameActivity : AppCompatActivity() {
 }

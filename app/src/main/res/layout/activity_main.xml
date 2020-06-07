@@ -51,7 +51,67 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.954"
-        tools:visibility="visible"
-        tools:ignore="LabelFor"/>
+        tools:ignore="LabelFor"
+        tools:visibility="visible" />
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:stretchColumns="1"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="-112dp">
+
+        <TableRow>
+
+            <TextView
+                android:id="@+id/localHost1"
+                android:layout_width="426dp"
+                android:layout_height="48dp"
+                android:padding="3dip"
+                android:text="@string/hello1" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:id="@+id/localHost2"
+                android:layout_width="426dp"
+                android:layout_height="48dp"
+                android:padding="3dip"
+                android:text="@string/hello1" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:id="@+id/localHost3"
+                android:layout_width="426dp"
+                android:layout_height="48dp"
+                android:padding="3dip"
+                android:text="@string/hello1" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:id="@+id/localHost4"
+                android:layout_width="426dp"
+                android:layout_height="48dp"
+                android:padding="3dip"
+                android:text="@string/hello1" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:id="@+id/localHost5"
+                android:layout_width="426dp"
+                android:layout_height="48dp"
+                android:padding="3dip"
+                android:text="@string/hello1" />
+        </TableRow>
+
+
+    </TableLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
