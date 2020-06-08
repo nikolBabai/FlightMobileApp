@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="		#d7d7d7"
     app:layout_constraintCircleAngle="150"
     tools:context=".MainActivity">
 
@@ -54,6 +55,42 @@
         tools:ignore="LabelFor"
         tools:visibility="visible" />
 
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="414dp"
+        android:layout_height="214dp"
+        android:contentDescription="@string/logo"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        app:srcCompat="@drawable/large" />
+
+    <RelativeLayout
+        android:id="@+id/addresses_confirm_root_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="3dp"
+        tools:layout_editor_absoluteY="-38dp" />
+
+    <Button
+        android:id="@+id/localHost4"
+        android:layout_width="364dp"
+        android:layout_height="58dp"
+        android:background="#2196F3"
+        android:text="@string/localHost4"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.617"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/localHost3"
+        app:layout_constraintVertical_bias="0.052"
+        tools:visibility="visible" />
+
     <Button
         android:id="@+id/localHost1"
         android:layout_width="364dp"
@@ -64,10 +101,10 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.553"
+        app:layout_constraintHorizontal_bias="0.617"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.068"
+        app:layout_constraintVertical_bias="0.359"
         tools:visibility="visible" />
 
     <Button
@@ -81,7 +118,7 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.553"
+        app:layout_constraintHorizontal_bias="0.617"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/localHost1"
         app:layout_constraintVertical_bias="0.0"
@@ -97,26 +134,10 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.553"
+        app:layout_constraintHorizontal_bias="0.617"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/localHost2"
-        app:layout_constraintVertical_bias="0.021"
-        tools:visibility="visible" />
-
-    <Button
-        android:id="@+id/localHost4"
-        android:layout_width="364dp"
-        android:layout_height="58dp"
-        android:background="#2196F3"
-        android:text="@string/localHost4"
-        android:textColor="#FFFFFF"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.553"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/localHost3"
-        app:layout_constraintVertical_bias="0.018"
+        app:layout_constraintVertical_bias="0.016"
         tools:visibility="visible" />
 
     <Button
@@ -129,10 +150,10 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.553"
+        app:layout_constraintHorizontal_bias="0.617"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/localHost4"
-        app:layout_constraintVertical_bias="0.021"
+        app:layout_constraintVertical_bias="0.146"
         tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
