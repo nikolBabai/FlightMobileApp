@@ -2,9 +2,9 @@
     <string name="app_name">FlightMobileApp</string>
     <string name="connect">Connect</string>
     <string name="type_url">Type URL…</string>
-    <string name="hello1">hello1</string>
-    <string name="hello1">hello1</string>
-    <string name="hello1">hello1</string>
-    <string name="hello1">hello1</string>
-    <string name="hello1">hello1</string>
+    <string name="localHost1">localHost1</string>
+    <string name="localHost2">localHost2</string>
+    <string name="localHost3">localHost3</string>
+    <string name="localHost4">localHost4</string>
+    <string name="localHost5">localHost5</string>
 </resources>
