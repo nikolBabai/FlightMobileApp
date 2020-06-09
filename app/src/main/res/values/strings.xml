@@ -8,4 +8,7 @@
     <string name="localHost4">localHost4</string>
     <string name="localHost5">localHost5</string>
     <string name="logo">logo</string>
+    <string name="Throttle">Throttle</string>
+    <string name="Rudder">Rudder</string>
+
 </resources>

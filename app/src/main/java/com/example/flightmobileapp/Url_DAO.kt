@@ -15,7 +15,7 @@ interface Url_DAO {
     @Query("select * from Url_Entity")
     fun readUrl() : List<Url_Entity>
 
-    @Query("SELECT COUNT(*) FROM Url_Entity")
+    @Query("SELECT COUNT(*) FROM Url_Entity WHERE url_location != 0")
     fun getCount():Int
 
     @Query("SELECT * FROM Url_Entity WHERE url_location=:id")
