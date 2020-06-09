@@ -21,32 +21,14 @@ class MainActivity : AppCompatActivity() {
         Thread {
             SetUrls(db)
         }.start()
-
+        // Set the listener to the buttons of the localHost.
         localHostArray = arrayListOf(
             findViewById<Button>(R.id.localHost1), findViewById<Button>(R.id.localHost2),
             findViewById<Button>(R.id.localHost3), findViewById<Button>(R.id.localHost4),
             findViewById<Button>(R.id.localHost5)
         )
+        setListenerLocalHost(db, localHostArray)
 
-        for (i in 0..4){
-            var button = localHostArray[i]
-            button.setOnClickListener{
-                // Put the correct url in the text box.
-                Thread {
-                    db.urlDao().readUrl().forEach() {
-                        println("location: " + it.url_location + " url: " + it.url_string)
-                    }
-                    db.urlDao().readUrl().forEach() {
-                        val j = i
-                        if (it.url_location == i + 1) {
-                            println("location: " + it.url_location + " url: " + it.url_string)
-                            // Find the url in the location needed and put it's string in the text box.
-                            typeUrl.text = it.url_string.toEditable()
-                        }
-                    }
-                }.start()
-            }
-        }
         connectButton.setOnClickListener{
             Thread {
                 UpdateDb(db)
@@ -60,6 +42,28 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setListenerLocalHost(db: AppDB, localHostArray : ArrayList<Button>){
+        for (i in 0..4){
+            var button = localHostArray[i]
+            button.setOnClickListener{
+                // Put the correct url in the text box.
+                Thread {
+                    db.urlDao().readUrl().forEach() {
+                        println("location: " + it.url_location + " url: " + it.url_string)
+                    }
+                    db.urlDao().readUrl().forEach() {
+                        if (it.url_location == i + 1) {
+                            println("location: " + it.url_location + " url: " + it.url_string)
+                            // Find the url in the location needed and put it's string in the text box.
+                            typeUrl.text = it.url_string.toEditable()
+                        }
+                    }
+                }.start()
+            }
+        }
+    }
+
+
     private fun UpdateDb(db: AppDB) {
         val input = typeUrl.text
         val url = Url_Entity()
@@ -71,38 +75,36 @@ class MainActivity : AppCompatActivity() {
                 db.urlDao().deleteUrl(it)
             }
         }
-
         // Move all lines by one
         db.urlDao().readUrl().forEach() {
             db.urlDao().deleteUrl(it)
             it.url_location += 1
             db.urlDao().saveUrl(it)
         }
-
         // Add to the db.
         db.urlDao().saveUrl(url)
     }
 
     private fun SetUrls(db: AppDB) {
-        var n = db.urlDao().getCount()
+        val n = db.urlDao().getCount()
         if (n > 0) {
-            var button = findViewById<Button>(R.id.localHost1)
+            val button = findViewById<Button>(R.id.localHost1)
             button.text = db.urlDao().getById(1).url_string
         }
         if (n > 1) {
-            var button = findViewById<Button>(R.id.localHost2)
-            button.text = db.urlDao().getById(2).url_string
+            val button = findViewById<Button>(R.id.localHost2)
+                button.text = db.urlDao().getById(2).url_string
         }
         if (n > 2) {
-            var button = findViewById<Button>(R.id.localHost3)
+            val button = findViewById<Button>(R.id.localHost3)
             button.text = db.urlDao().getById(3).url_string
         }
         if (n > 3) {
-            var button = findViewById<Button>(R.id.localHost4)
+            val button = findViewById<Button>(R.id.localHost4)
             button.text = db.urlDao().getById(4).url_string
         }
         if (n > 4) {
-            var button = findViewById<Button>(R.id.localHost5)
+            val button = findViewById<Button>(R.id.localHost5)
             button.text = db.urlDao().getById(5).url_string
         }
     }
