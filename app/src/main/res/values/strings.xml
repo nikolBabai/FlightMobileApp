@@ -10,5 +10,6 @@
     <string name="logo">logo</string>
     <string name="Throttle">Throttle</string>
     <string name="Rudder">Rudder</string>
+    <string name="screenshot">screenshot</string>
 
 </resources>
