@@ -11,5 +11,7 @@
     <string name="Throttle">Throttle</string>
     <string name="Rudder">Rudder</string>
     <string name="screenshot">screenshot</string>
-
+    <string name="Elevator">Elevator</string>
+    <string name="Aileron">Aileron</string>
+    <string name="num0">0.00</string>
 </resources>

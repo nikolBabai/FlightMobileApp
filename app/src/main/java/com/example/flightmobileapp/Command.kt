@@ -1,6 +1,7 @@
 package com.example.flightmobileapp
 
 import kotlinx.serialization.Serializable
+import kotlin.math.abs
 
 class Command {
     private var aileron: Double = 0.0
@@ -10,8 +11,8 @@ class Command {
     private var changed: Boolean = true
 
 
-    public fun setAileron(v: Double) {
-        var diff = Math.abs(aileron - v)
+    fun setAileron(v: Double) {
+        val diff = abs(aileron - v)
         if (diff < 0.02) {
             return
         }
@@ -21,8 +22,8 @@ class Command {
         }
     }
 
-    public fun setRudder(v: Double) {
-        var diff = Math.abs(rudder - v)
+    fun setRudder(v: Double) {
+        val diff = abs(rudder - v)
         if (diff < 0.02) {
             return
         }
@@ -32,19 +33,19 @@ class Command {
         }
     }
 
-    public fun setThrottle(v: Double) {
-        var diff = Math.abs(throttle - v)
+    fun setThrottle(v: Double) {
+        val diff = abs(throttle - v)
         if (diff < 0.01) {
             return
         }
-        if (v >= 0 && v <= 1) {
+        if (v in 0.0..1.0) {
             changed = true
             throttle = v
         }
     }
 
-    public fun setElevator(v: Double) {
-        var diff = Math.abs(elevator - v)
+    fun setElevator(v: Double) {
+        val diff = abs(elevator - v)
         if (diff < 0.02) {
             return
         }
@@ -54,15 +55,15 @@ class Command {
         }
     }
 
-    public fun changedChangeBack() {
+    fun changedChangeBack() {
         changed = false
     }
 
-    public fun checkIfChanged(): Boolean {
+    fun checkIfChanged(): Boolean {
         return changed
     }
 
-    public override fun toString(): String {
+    override fun toString(): String {
         return "{\n" +
                 " \"aileron\": "+ aileron.toString() + ",\n" +
                 " \"rudder\": " + rudder.toString() + ",\n" +

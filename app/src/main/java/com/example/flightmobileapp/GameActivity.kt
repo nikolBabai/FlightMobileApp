@@ -2,20 +2,18 @@ package com.example.flightmobileapp
 
 import android.os.Build
 import android.os.Bundle
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import com.ramotion.fluidslider.FluidSlider
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.game_activity.*
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import java.io.BufferedReader
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.InputStreamReader
-import java.lang.System.load
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -45,7 +43,7 @@ class GameActivity : AppCompatActivity() {
 
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
-    private fun SendCommand() {
+    private fun sendCommand() {
         if (command.checkIfChanged()) {
             val json = Json(JsonConfiguration.Stable)
             val res = json.parseJson(command.toString());
@@ -105,10 +103,14 @@ class GameActivity : AppCompatActivity() {
             var c = Command()
             val x = cos(Math.toRadians(angle.toDouble()))*strength/100
             val y = sin(Math.toRadians(angle.toDouble()))*strength/100
-            println("x: " + x.toString()+ " y: " + y.toString())
+            val xVal = findViewById<TextView>(R.id.aileronVal)
+            xVal.text = String.format("%.2f", x)
+            val yVal = findViewById<TextView>(R.id.elevatorVal)
+            yVal.text = String.format("%.2f", y)
+            println("x: $x y: $y")
             command.setAileron(x)
             command.setElevator(y)
-            SendCommand()
+            sendCommand()
         }
     }
 
@@ -121,9 +123,9 @@ class GameActivity : AppCompatActivity() {
 
         sliderRudder.bubbleText = "0"
         sliderRudder.positionListener = {pos ->
-            sliderRudder.bubbleText = "${"%.2f".format(pos * 2 + min)}"
+            sliderRudder.bubbleText = "%.2f".format(pos * 2 + min)
             command.setRudder(pos.toDouble())
-            SendCommand()
+            sendCommand()
         }
         sliderRudder.startText = "$min"
         sliderRudder.endText = "$max"
@@ -138,9 +140,9 @@ class GameActivity : AppCompatActivity() {
         sliderThrottle.bubbleText = "0"
         sliderThrottle.position = 0.0F
         sliderThrottle.positionListener = {pos ->
-            sliderThrottle.bubbleText = "${"%.2f".format(pos + min2)}"
+            sliderThrottle.bubbleText = "%.2f".format(pos + min2)
             command.setThrottle(pos.toDouble())
-            SendCommand()
+            sendCommand()
         }
         sliderThrottle.startText = "$min2"
         sliderThrottle.endText = "$max2"

@@ -7,7 +7,10 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.InputStream
 import java.lang.Thread.sleep
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,10 +49,23 @@ class MainActivity : AppCompatActivity() {
                 t3.start()
                 t3.join()
             }
-
-            val intent = Intent(this, GameActivity::class.java)
-            startActivity(intent)
+            if (checkConnection(typeUrl.text.toString())) {
+                val intent = Intent(this, GameActivity::class.java)
+                startActivity(intent)
+            }
         }
+    }
+
+    private fun checkConnection(url: String): Boolean {
+        try {
+            val url = URL(url)
+            val con = url.openConnection() as HttpURLConnection
+            con.disconnect()
+            return true
+        } catch (exception: Exception) {
+            println("no connection")
+        }
+        return false
     }
 
     private fun setListenerLocalHost(db: AppDB, localHostArray: ArrayList<Button>) {
@@ -82,8 +98,6 @@ class MainActivity : AppCompatActivity() {
             enterUrlNotExist(db)
             db.urlDao().saveUrl(url)
         }
-        // Add to the db.
-        println("added to db location " + url.url_location + " string: " + url.url_string)
     }
 
     private fun checkIfUrlExist (db : AppDB): Boolean {
@@ -97,14 +111,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun enterUrlNotExist (db : AppDB) {
-        val n = db.urlDao().getCount()
         // Move all lines by one
         db.urlDao().readUrl().asReversed().forEach() {
             db.urlDao().deleteUrl(it)
             it.url_location += 1
             if (it.url_location <= 5) {
                 db.urlDao().saveUrl(it)
-                println("changed location to : " + it.url_location + " string: " + it.url_string)
             }
         }
     }
@@ -113,19 +125,19 @@ class MainActivity : AppCompatActivity() {
         val n = db.urlDao().getCount()
         if (n > 0) {
             val button = findViewById<Button>(R.id.localHost1)
-            if ( db.urlDao().getById(1) != null) {
+            if ( db.urlDao().getById(1).url_string != "") {
                 button.text = db.urlDao().getById(1).url_string
             }
         }
         if (n > 1) {
             val button = findViewById<Button>(R.id.localHost2)
-            if (db.urlDao().getById(2) != null) {
+            if (db.urlDao().getById(2).url_string != "") {
                 button.text = db.urlDao().getById(2).url_string
             }
         }
         if (n > 2) {
             val button = findViewById<Button>(R.id.localHost3)
-            if (db.urlDao().getById(3) != null) {
+            if (db.urlDao().getById(3).url_string != "") {
                 button.text = db.urlDao().getById(3).url_string
             }
         }
