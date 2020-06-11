@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
 import kotlinx.android.synthetic.main.activity_main.*
@@ -49,21 +50,22 @@ class MainActivity : AppCompatActivity() {
                 t3.start()
                 t3.join()
             }
-            if (checkConnection(typeUrl.text.toString())) {
+            //if (checkConnection(typeUrl.text.toString())) {
                 val intent = Intent(this, GameActivity::class.java)
                 startActivity(intent)
-            }
+            //}
         }
     }
 
     private fun checkConnection(url: String): Boolean {
         try {
-            val url = URL(url)
-            val con = url.openConnection() as HttpURLConnection
+            val url1 = URL(url)
+            val con = url1.openConnection() as HttpURLConnection
             con.disconnect()
             return true
         } catch (exception: Exception) {
-            println("no connection")
+            val toast = Toast.makeText(applicationContext, "No connection", Toast.LENGTH_SHORT)
+            toast.show()
         }
         return false
     }

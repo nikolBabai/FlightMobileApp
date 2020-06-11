@@ -3,13 +3,14 @@ package com.example.flightmobileapp
 import android.os.Build
 import android.os.Bundle
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.game_activity.*
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.json.JsonElement
 import java.io.BufferedReader
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -17,22 +18,32 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 class GameActivity : AppCompatActivity() {
     private var command: Command = Command()
+    private var isDestroy : Boolean = false
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     override fun onCreate(savedInstanceState: Bundle?) {
+        println("isDestroy: $isDestroy")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.game_activity)
-        SetSliders()
+        setSliders()
         setJoystick()
-        /*Thread {
-            while (true) {
-                ChangeScreenShot()
-            }
-        }.start()*/
+         /*Thread {
+             while (!isDestroy) {
+                 ChangeScreenShot()
+             }
+         }.start()*/
+    }
+
+    override fun onDestroy() {
+        isDestroy = true
+        println("isDestroy: $isDestroy")
+        super.onDestroy()
     }
 
     private fun ChangeScreenShot() {
@@ -93,7 +104,10 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun displayError(s: String) {
-
+        var toast = Toast.makeText(applicationContext, s, Toast.LENGTH_SHORT)
+        toast.show()
+        toast = Toast.makeText(applicationContext, "You may return to the previous screen and reconnect", Toast.LENGTH_SHORT)
+        toast.show()
     }
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
@@ -115,7 +129,7 @@ class GameActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
-    private fun SetSliders() {
+    private fun setSliders() {
         // Rudder Slider
         val min = -1.0
         val max = 1.0
