@@ -6,10 +6,7 @@ import android.text.Editable
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.room.Room
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.InputStream
-import java.lang.Thread.sleep
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -43,12 +40,14 @@ class MainActivity : AppCompatActivity() {
 
         connectButton.setOnClickListener {
             if (typeUrl.text.toString() != "") {
-                val t3 = Thread {
-                    updateDb(db)
-                    setUrls(db)
+                val r = object: Runnable {
+                    override fun run() {
+                        updateDb(db)
+                    }
                 }
-                t3.start()
-                t3.join()
+                val t = Thread(r)
+                t.start()
+                t.join()
             }
             //if (checkConnection(typeUrl.text.toString())) {
                 val intent = Intent(this, GameActivity::class.java)

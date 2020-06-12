@@ -1,13 +1,18 @@
 package com.example.flightmobileapp
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.game_activity.*
+import kotlinx.io.InputStream
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonElement
@@ -33,11 +38,50 @@ class GameActivity : AppCompatActivity() {
         setContentView(R.layout.game_activity)
         setSliders()
         setJoystick()
-         /*Thread {
+         Thread {
+             var db = AppDB.getDatabase(this)
+             val url = db.urlDao().getById(1).url_string
+             //val url = "https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iGXWEmxtxhIo/v1/1000x-1.jpg"
              while (!isDestroy) {
-                 ChangeScreenShot()
+                 try {
+                     val imgLoad = ImageLoader(screenshot)
+                     imgLoad.execute(url)
+                 }
+                 catch (e :Exception) {
+
+                 }
              }
-         }.start()*/
+         }.start()
+    }
+
+    class ImageLoader: AsyncTask<String, Void, Bitmap>  {
+        var img: ImageView? = null
+
+        public constructor(imgN: ImageView) {
+            img = imgN
+        }
+
+        @InternalSerializationApi
+        override fun doInBackground(vararg params: String?): Bitmap {
+            val url = params[0] + "/screenshot"
+            try {
+                val inStream = java.net.URL(url).openStream() as InputStream
+                return BitmapFactory.decodeStream(inStream)
+            }
+            catch (e: Exception) {
+                throw e
+            }
+            catch (t: Throwable){
+                throw t
+            }
+        }
+
+        override fun onPostExecute(result: Bitmap?) {
+            if (result != null) {
+                img?.setImageBitmap(result)
+            }
+        }
+
     }
 
     override fun onDestroy() {
@@ -47,9 +91,6 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun ChangeScreenShot() {
-        var db = AppDB.getDatabase(this)
-        val url = db.urlDao().getById(1).url_string + "/screenshot"
-        Picasso.get().load(url).into(screenshot)
     }
 
 
@@ -162,3 +203,4 @@ class GameActivity : AppCompatActivity() {
         sliderThrottle.endText = "$max2"
     }
 }
+
