@@ -40,11 +40,11 @@ class GameActivity : AppCompatActivity() {
         setJoystick()
          Thread {
              var db = AppDB.getDatabase(this)
-             val url = db.urlDao().getById(1).url_string
-             //val url = "https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iGXWEmxtxhIo/v1/1000x-1.jpg"
+             //val url = db.urlDao().getById(1).url_string
+             val imgLoad = ImageLoader(screenshot)
+             val url = "https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iGXWEmxtxhIo/v1/1000x-1.jpg"
              while (!isDestroy) {
                  try {
-                     val imgLoad = ImageLoader(screenshot)
                      imgLoad.execute(url)
                  }
                  catch (e :Exception) {
@@ -99,7 +99,7 @@ class GameActivity : AppCompatActivity() {
         if (command.checkIfChanged()) {
             val json = Json(JsonConfiguration.Stable)
             val res = json.parseJson(command.toString());
-            //POST(res)
+            POST(res)
         }
         command.changedChangeBack()
     }

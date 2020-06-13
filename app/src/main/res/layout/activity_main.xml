@@ -76,24 +76,10 @@
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/localHost4"
-        android:layout_width="wrap_content"
-        android:layout_height="38dp"
-        android:background="#2196F3"
-        android:text="@string/localHost4"
-        android:textColor="#FFFFFF"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.617"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/localHost3"
-        app:layout_constraintVertical_bias="0.01999998"
-        tools:visibility="visible" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
 
     <Button
         android:id="@+id/localHost1"
@@ -105,10 +91,10 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.617"
+        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.359"
+        app:layout_constraintVertical_bias="0.421"
         tools:visibility="visible" />
 
     <Button
@@ -121,10 +107,10 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.617"
+        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/localHost1"
-        app:layout_constraintVertical_bias="0.00999999"
+        app:layout_constraintVertical_bias="0.011"
         tools:visibility="visible" />
 
     <Button
@@ -137,10 +123,10 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.617"
+        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/localHost2"
-        app:layout_constraintVertical_bias="0.016"
+        app:layout_constraintVertical_bias="0.018"
         tools:visibility="visible" />
 
     <Button
@@ -153,10 +139,26 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="@+id/addresses_confirm_root_view"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.617"
+        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/localHost4"
-        app:layout_constraintVertical_bias="0.01999998"
+        app:layout_constraintVertical_bias="0.054"
+        tools:visibility="visible" />
+
+    <Button
+        android:id="@+id/localHost4"
+        android:layout_width="wrap_content"
+        android:layout_height="38dp"
+        android:background="#2196F3"
+        android:text="@string/localHost4"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.501"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/localHost3"
+        app:layout_constraintVertical_bias="0.032"
         tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
