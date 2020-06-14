@@ -22,11 +22,7 @@ abstract class AppDB : RoomDatabase() {
                 return tempInstance
             }
             synchronized(this) {
-                val dbFile = context.getDatabasePath("urls.db")
-                val instance = Room.inMemoryDatabaseBuilder(
-                    context.applicationContext,
-                    AppDB::class.java
-                ).build()
+                val instance =  Room.databaseBuilder(context, AppDB:: class.java, "UrlDB").build()
                 INSTANCE = instance
                 return instance
             }

@@ -1,6 +1,6 @@
 package com.example.flightmobileapp
-
 import android.graphics.Bitmap
+import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.os.AsyncTask
 import android.os.Build
@@ -52,6 +52,12 @@ class GameActivity : AppCompatActivity() {
                  }
              }
          }.start()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        // TODO Auto-generated method stub
+        super.onConfigurationChanged(newConfig)
+        setContentView(R.layout.game_activity)
     }
 
     class ImageLoader: AsyncTask<String, Void, Bitmap>  {
@@ -106,42 +112,50 @@ class GameActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun POST(res: JsonElement) {
-        var db = AppDB.getDatabase(this)
-        val url = db.urlDao().getById(1).url_string
-        val connection = URL(url).openConnection() as HttpURLConnection
-        connection.requestMethod = "POST"
-        connection.connectTimeout = 10000
-        connection.doOutput = true
+        val t = Thread {
+            var flag = true
+            val db = AppDB.getDatabase(this)
+            val url = db.urlDao().getById(1).url_string
+            val connection = URL(url).openConnection() as HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.connectTimeout = 10000
+            connection.doOutput = true
 
-        val postData: ByteArray = res.toString().toByteArray(StandardCharsets.UTF_8)
+            val postData: ByteArray = res.toString().toByteArray(StandardCharsets.UTF_8)
 
-        connection.setRequestProperty("charset", "utf-8")
-        connection.setRequestProperty("Content-lenght", postData.size.toString())
-        connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("charset", "utf-8")
+            connection.setRequestProperty("Content-lenght", postData.size.toString())
+            connection.setRequestProperty("Content-Type", "application/json")
 
-        try {
-            val outputStream: DataOutputStream = DataOutputStream(connection.outputStream)
-            outputStream.write(postData)
-            outputStream.flush()
-        } catch (exception: Exception) {
-            connection.responseCode
-            displayError("POST failed " + connection.responseCode.toString())
-            return
-        }
-
-        if (connection.responseCode != HttpURLConnection.HTTP_OK && connection.responseCode != HttpURLConnection.HTTP_CREATED) {
             try {
-                val inputStream: DataInputStream = DataInputStream(connection.inputStream)
-                val reader: BufferedReader = BufferedReader(InputStreamReader(inputStream))
-                val output: String = reader.readLine()
-
-                println("There was error while connecting the chat $output")
-                System.exit(0)
-
+                val outputStream: DataOutputStream = DataOutputStream(connection.outputStream)
+                outputStream.write(postData)
+                outputStream.flush()
             } catch (exception: Exception) {
-                throw Exception("Exception while push the notification  $exception.message")
+                connection.responseCode
+                displayError("POST failed " + connection.responseCode.toString())
+                flag = false
+            }
+
+            if (connection.responseCode != HttpURLConnection.HTTP_OK
+                && connection.responseCode != HttpURLConnection.HTTP_CREATED
+                && flag
+            ) {
+                try {
+                    val inputStream: DataInputStream = DataInputStream(connection.inputStream)
+                    val reader: BufferedReader = BufferedReader(InputStreamReader(inputStream))
+                    val output: String = reader.readLine()
+
+                    println("There was error while connecting the chat $output")
+                    System.exit(0)
+
+                } catch (exception: Exception) {
+                    throw Exception("Exception while push the notification  $exception.message")
+                }
             }
         }
+        t.start();
+        t.join();
     }
 
     private fun displayError(s: String) {
