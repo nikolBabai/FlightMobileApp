@@ -41,11 +41,11 @@ class GameActivity : AppCompatActivity() {
          Thread {
              var db = AppDB.getDatabase(this)
              //val url = db.urlDao().getById(1).url_string
-             val imgLoad = ImageLoader(screenshot)
+             //val imgLoad = ImageLoader(screenshot)
              val url = "https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iGXWEmxtxhIo/v1/1000x-1.jpg"
              while (!isDestroy) {
                  try {
-                     imgLoad.execute(url)
+                    // imgLoad.execute(url)
                  }
                  catch (e :Exception) {
 
@@ -55,9 +55,9 @@ class GameActivity : AppCompatActivity() {
     }
 
     class ImageLoader: AsyncTask<String, Void, Bitmap>  {
-        var img: ImageView? = null
+        private var img: ImageView? = null
 
-        public constructor(imgN: ImageView) {
+        constructor(imgN: ImageView) {
             img = imgN
         }
 
@@ -65,7 +65,7 @@ class GameActivity : AppCompatActivity() {
         override fun doInBackground(vararg params: String?): Bitmap {
             val url = params[0] + "/screenshot"
             try {
-                val inStream = java.net.URL(url).openStream() as InputStream
+                val inStream = URL(url).openStream() as InputStream
                 return BitmapFactory.decodeStream(inStream)
             }
             catch (e: Exception) {

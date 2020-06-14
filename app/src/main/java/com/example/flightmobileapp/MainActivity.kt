@@ -13,9 +13,12 @@ import java.net.URL
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        createApp(savedInstanceState)
+    }
+
+    private fun createApp(savedInstanceState: Bundle?) {
         setContentView(R.layout.activity_main)
         var db = AppDB.getDatabase(this)
-        val connectButton = findViewById<Button>(R.id.connectButton)
         var localHostArray: ArrayList<Button> = arrayListOf<Button>()
         val t = Thread  {
             db.urlDao().readUrl().forEach() {
@@ -37,22 +40,28 @@ class MainActivity : AppCompatActivity() {
             findViewById<Button>(R.id.localHost5)
         )
         setListenerLocalHost(db, localHostArray)
+        setConnectionButton(db, savedInstanceState)
+    }
 
+    private fun setConnectionButton(db: AppDB, savedInstanceState: Bundle?) {
+        val connectButton = findViewById<Button>(R.id.connectButton)
         connectButton.setOnClickListener {
             if (typeUrl.text.toString() != "") {
-                val r = object: Runnable {
-                    override fun run() {
-                        updateDb(db)
-                    }
-                }
-                val t = Thread(r)
-                t.start()
-                t.join()
+                val r = Runnable { updateDb(db)}
+                val thread = Thread(r)
+                thread.start()
+                thread.join()
             }
             //if (checkConnection(typeUrl.text.toString())) {
                 val intent = Intent(this, GameActivity::class.java)
                 startActivity(intent)
-            //}
+            /*} else {
+                // Enter again to this activity so the buttons will be updated.
+                finish();
+                startActivity(intent);
+            }
+
+             */
         }
     }
 
@@ -71,7 +80,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setListenerLocalHost(db: AppDB, localHostArray: ArrayList<Button>) {
         for (i in 0..4) {
-            var button = localHostArray[i]
+            val button = localHostArray[i]
             button.setOnClickListener {
                 // Put the correct url in the text box.
                 val t4 = Thread {
@@ -95,10 +104,10 @@ class MainActivity : AppCompatActivity() {
         if (url.url_string == "") {
             return
         }
-        if (!checkIfUrlExist(db)) {
+       // if (!checkIfUrlExist(db)) {
             enterUrlNotExist(db)
             db.urlDao().saveUrl(url)
-        }
+       // }
     }
 
     private fun checkIfUrlExist (db : AppDB): Boolean {
@@ -127,30 +136,37 @@ class MainActivity : AppCompatActivity() {
         if (n > 0) {
             val button = findViewById<Button>(R.id.localHost1)
             if ( db.urlDao().getById(1).url_string != "") {
+                val check = db.urlDao().getById(1).url_string
                 button.text = db.urlDao().getById(1).url_string
             }
         }
         if (n > 1) {
             val button = findViewById<Button>(R.id.localHost2)
             if (db.urlDao().getById(2).url_string != "") {
+                val check = db.urlDao().getById(2).url_string
+
                 button.text = db.urlDao().getById(2).url_string
             }
         }
         if (n > 2) {
             val button = findViewById<Button>(R.id.localHost3)
             if (db.urlDao().getById(3).url_string != "") {
+                val check = db.urlDao().getById(3).url_string
                 button.text = db.urlDao().getById(3).url_string
             }
         }
         if (n > 3) {
             val button = findViewById<Button>(R.id.localHost4)
             if (db.urlDao().getById(4).url_string != "") {
+                val check = db.urlDao().getById(4).url_string
+
                 button.text = db.urlDao().getById(4).url_string
             }
         }
         if (n > 4) {
             val button = findViewById<Button>(R.id.localHost5)
             if (db.urlDao().getById(5).url_string != "") {
+                val check = db.urlDao().getById(5).url_string
                 button.text = db.urlDao().getById(5).url_string
             }
         }
