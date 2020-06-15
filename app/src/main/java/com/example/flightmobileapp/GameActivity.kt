@@ -1,6 +1,6 @@
 package com.example.flightmobileapp
-import android.graphics.Bitmap
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.AsyncTask
 import android.os.Build
@@ -16,10 +16,6 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonElement
-import java.io.BufferedReader
-import java.io.DataInputStream
-import java.io.DataOutputStream
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -41,14 +37,15 @@ class GameActivity : AppCompatActivity() {
          Thread {
              var db = AppDB.getDatabase(this)
              //val url = db.urlDao().getById(1).url_string
-             //val imgLoad = ImageLoader(screenshot)
-             val url = "https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iGXWEmxtxhIo/v1/1000x-1.jpg"
+             val imgLoad = ImageLoader(screenshot)
+             //val url = "https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iGXWEmxtxhIo/v1/1000x-1.jpg"
              while (!isDestroy) {
                  try {
-                    // imgLoad.execute(url)
+                     Thread.sleep(1000)
+                     //imgLoad.execute(url)
                  }
                  catch (e :Exception) {
-
+                     //displayError()
                  }
              }
          }.start()
@@ -60,12 +57,8 @@ class GameActivity : AppCompatActivity() {
         setContentView(R.layout.game_activity)
     }
 
-    class ImageLoader: AsyncTask<String, Void, Bitmap>  {
-        private var img: ImageView? = null
-
-        constructor(imgN: ImageView) {
-            img = imgN
-        }
+    class ImageLoader(imgN: ImageView) : AsyncTask<String, Void, Bitmap>() {
+        private var img: ImageView? = imgN
 
         @InternalSerializationApi
         override fun doInBackground(vararg params: String?): Bitmap {
@@ -102,60 +95,48 @@ class GameActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun sendCommand() {
-        if (command.checkIfChanged()) {
-            val json = Json(JsonConfiguration.Stable)
-            val res = json.parseJson(command.toString());
-            POST(res)
+        try {
+            if (command.checkIfChanged()) {
+                val json = Json(JsonConfiguration.Stable)
+                val res = json.parseJson(command.toString());
+                POST(res)
+            }
         }
-        command.changedChangeBack()
+        catch (e: Exception) {
+            displayError(e.toString())
+        } finally {
+            command.changedChangeBack()
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun POST(res: JsonElement) {
+        var resCode = 0
         val t = Thread {
-            var flag = true
             val db = AppDB.getDatabase(this)
-            val url = db.urlDao().getById(1).url_string
-            val connection = URL(url).openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.connectTimeout = 10000
-            connection.doOutput = true
+            val url = db.urlDao().getById(1).url_string + "/api/command"
+            val urlObj = URL(url)
 
-            val postData: ByteArray = res.toString().toByteArray(StandardCharsets.UTF_8)
-
-            connection.setRequestProperty("charset", "utf-8")
-            connection.setRequestProperty("Content-lenght", postData.size.toString())
-            connection.setRequestProperty("Content-Type", "application/json")
-
-            try {
-                val outputStream: DataOutputStream = DataOutputStream(connection.outputStream)
-                outputStream.write(postData)
+            urlObj.openConnection().let {
+                it as HttpURLConnection
+            }.apply {
+                requestMethod = "POST"
+                setRequestProperty("Content-Type", "application/json; utf-8")
+                setRequestProperty("Accept", "application/json")
+                doOutput = true
+                val dataToSend = res.toString()
+                val input: ByteArray = dataToSend.toByteArray(StandardCharsets.UTF_8)
+                outputStream.write(input)
                 outputStream.flush()
-            } catch (exception: Exception) {
-                connection.responseCode
-                displayError("POST failed " + connection.responseCode.toString())
-                flag = false
-            }
-
-            if (connection.responseCode != HttpURLConnection.HTTP_OK
-                && connection.responseCode != HttpURLConnection.HTTP_CREATED
-                && flag
-            ) {
-                try {
-                    val inputStream: DataInputStream = DataInputStream(connection.inputStream)
-                    val reader: BufferedReader = BufferedReader(InputStreamReader(inputStream))
-                    val output: String = reader.readLine()
-
-                    println("There was error while connecting the chat $output")
-                    System.exit(0)
-
-                } catch (exception: Exception) {
-                    throw Exception("Exception while push the notification  $exception.message")
-                }
+            }.let {
+                resCode = it.responseCode
             }
         }
-        t.start();
-        t.join();
+        t.start()
+        t.join()
+        if (resCode < 200 || resCode >= 300) {
+            displayError("Error with POST")
+        }
     }
 
     private fun displayError(s: String) {
@@ -177,9 +158,11 @@ class GameActivity : AppCompatActivity() {
             val yVal = findViewById<TextView>(R.id.elevatorVal)
             yVal.text = String.format("%.2f", y)
             println("x: $x y: $y")
-            command.setAileron(x)
-            command.setElevator(y)
-            sendCommand()
+            command.setAileron(xVal.text.toString().toDouble())
+            command.setElevator(yVal.text.toString().toDouble())
+            if (!isDestroy) {
+                sendCommand()
+            }
         }
     }
 
@@ -193,8 +176,11 @@ class GameActivity : AppCompatActivity() {
         sliderRudder.bubbleText = "0"
         sliderRudder.positionListener = {pos ->
             sliderRudder.bubbleText = "%.2f".format(pos * 2 + min)
-            command.setRudder(pos.toDouble())
-            sendCommand()
+            val v = String.format("%.2f", pos * 2 + min).toDouble()
+            command.setRudder(v)
+            if (!isDestroy) {
+                sendCommand()
+            }
         }
         sliderRudder.startText = "$min"
         sliderRudder.endText = "$max"
@@ -210,8 +196,11 @@ class GameActivity : AppCompatActivity() {
         sliderThrottle.position = 0.0F
         sliderThrottle.positionListener = {pos ->
             sliderThrottle.bubbleText = "%.2f".format(pos + min2)
-            command.setThrottle(pos.toDouble())
-            sendCommand()
+            val v = String.format("%.2f", pos).toDouble()
+            command.setThrottle(v)
+            if (!isDestroy) {
+                sendCommand()
+            }
         }
         sliderThrottle.startText = "$min2"
         sliderThrottle.endText = "$max2"

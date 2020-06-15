@@ -104,10 +104,33 @@ class MainActivity : AppCompatActivity() {
         if (url.url_string == "") {
             return
         }
-       // if (!checkIfUrlExist(db)) {
+       if (!checkIfUrlExist(db)) {
             enterUrlNotExist(db)
             db.urlDao().saveUrl(url)
-       // }
+        } else{
+           enterUrlExist(db)
+           db.urlDao().saveUrl(url)
+       }
+    }
+
+    private fun enterUrlExist(db: AppDB) {
+        val input = typeUrl.text
+        var location = 0
+        db.urlDao().readUrl().forEach() {
+            if (it.url_string == input.toString()) {
+                location = it.url_location
+            }
+        }
+        db.urlDao().readUrl().asReversed().forEach() {
+            if (it.url_location < location) {
+                db.urlDao().deleteUrl(it)
+                it.url_location += 1
+                db.urlDao().saveUrl(it)
+            }
+            if (it.url_location == location) {
+                db.urlDao().deleteUrl(it)
+            }
+        }
     }
 
     private fun checkIfUrlExist (db : AppDB): Boolean {
