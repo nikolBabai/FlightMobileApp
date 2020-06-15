@@ -112,7 +112,9 @@ class MainActivity : AppCompatActivity() {
            db.urlDao().saveUrl(url)
        }
     }
-
+    /*
+    *
+    * */
     private fun enterUrlExist(db: AppDB) {
         val input = typeUrl.text
         var location = 0

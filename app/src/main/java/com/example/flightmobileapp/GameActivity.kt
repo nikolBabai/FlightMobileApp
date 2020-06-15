@@ -138,6 +138,7 @@ class GameActivity : AppCompatActivity() {
             displayError("Error with POST")
         }
     }
+    //
 
     private fun displayError(s: String) {
         var toast = Toast.makeText(applicationContext, s, Toast.LENGTH_SHORT)
