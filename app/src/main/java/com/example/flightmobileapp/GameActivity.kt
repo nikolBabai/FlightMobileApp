@@ -35,17 +35,30 @@ class GameActivity : AppCompatActivity() {
         setSliders()
         setJoystick()
          Thread {
-             var db = AppDB.getDatabase(this)
-             //val url = db.urlDao().getById(1).url_string
-             val imgLoad = ImageLoader(screenshot)
-             //val url = "https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iGXWEmxtxhIo/v1/1000x-1.jpg"
+             val db = AppDB.getDatabase(this)
+             val url = db.urlDao().getById(1).url_string
              while (!isDestroy) {
                  try {
+                     val imgLoad = ImageLoader(screenshot)
                      Thread.sleep(1000)
-                     //imgLoad.execute(url)
+                     imgLoad.execute(url)
                  }
                  catch (e :Exception) {
-                     //displayError()
+                     /*
+                     this.runOnUiThread(Runnable {
+                         Toast.makeText(
+                             this,
+                             "Error receiving screenshot",
+                             Toast.LENGTH_SHORT
+                         ).show()
+                         Toast.makeText(
+                             this,
+                             "You may return to the previous screen and reconnect",
+                             Toast.LENGTH_SHORT
+                         ).show()
+                     })
+
+                      */
                  }
              }
          }.start()
@@ -135,7 +148,7 @@ class GameActivity : AppCompatActivity() {
         t.start()
         t.join()
         if (resCode < 200 || resCode >= 300) {
-            displayError("Error with POST")
+            displayError("Error posting values to the server")
         }
     }
     //
