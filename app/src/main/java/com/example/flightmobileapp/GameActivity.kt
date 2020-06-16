@@ -2,9 +2,7 @@ package com.example.flightmobileapp
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.AsyncTask
-import android.os.Build
-import android.os.Bundle
+import android.os.*
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -21,11 +19,24 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.properties.Delegates
 
 
 class GameActivity : AppCompatActivity() {
     private var command: Command = Command()
     private var isDestroy : Boolean = false
+    var errorMsg: String by Delegates.observable("") { _, _, newValue ->
+        displayError(newValue)
+    }
+    private val timer: CountDownTimer = object : CountDownTimer(10000, 1000) {
+        override fun onTick(millisUntilFinished: Long) {
+        }
+
+        override fun onFinish() {
+            throw Exception("Server Timeout!")
+        }
+
+    }
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,28 +48,17 @@ class GameActivity : AppCompatActivity() {
          Thread {
              val db = AppDB.getDatabase(this)
              val url = db.urlDao().getById(1).url_string
+             Looper.prepare()
              while (!isDestroy) {
                  try {
                      val imgLoad = ImageLoader(screenshot)
+                     imgLoad.setTimer(timer)
+                     imgLoad.setGame(this)
                      Thread.sleep(1000)
                      imgLoad.execute(url)
                  }
-                 catch (e :Exception) {
-                     /*
-                     this.runOnUiThread(Runnable {
-                         Toast.makeText(
-                             this,
-                             "Error receiving screenshot",
-                             Toast.LENGTH_SHORT
-                         ).show()
-                         Toast.makeText(
-                             this,
-                             "You may return to the previous screen and reconnect",
-                             Toast.LENGTH_SHORT
-                         ).show()
-                     })
-
-                      */
+                 catch (t: Throwable) {
+                     errorMsg = t.toString()
                  }
              }
          }.start()
@@ -72,19 +72,30 @@ class GameActivity : AppCompatActivity() {
 
     class ImageLoader(imgN: ImageView) : AsyncTask<String, Void, Bitmap>() {
         private var img: ImageView? = imgN
+        private var timer: CountDownTimer? = null
+        private var game: GameActivity? = null
+        fun setTimer(t: CountDownTimer) {
+            timer = t
+        }
 
+        fun setGame(g: GameActivity) {
+            game = g
+        }
         @InternalSerializationApi
-        override fun doInBackground(vararg params: String?): Bitmap {
+        override fun doInBackground(vararg params: String?): Bitmap? {
             val url = params[0] + "/screenshot"
-            try {
+            return try {
                 val inStream = URL(url).openStream() as InputStream
-                return BitmapFactory.decodeStream(inStream)
-            }
-            catch (e: Exception) {
-                throw e
-            }
-            catch (t: Throwable){
-                throw t
+                timer?.start()
+                val screenshot = BitmapFactory.decodeStream(inStream)
+                timer?.cancel()
+                screenshot
+            } catch (e: Exception) {
+                game?.errorMsg = e.toString()
+                null
+            } catch (t: Throwable){
+                game?.errorMsg = t.toString()
+                null
             }
         }
 
@@ -101,10 +112,6 @@ class GameActivity : AppCompatActivity() {
         println("isDestroy: $isDestroy")
         super.onDestroy()
     }
-
-    private fun ChangeScreenShot() {
-    }
-
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun sendCommand() {
@@ -133,6 +140,7 @@ class GameActivity : AppCompatActivity() {
             urlObj.openConnection().let {
                 it as HttpURLConnection
             }.apply {
+                connectTimeout = 10000
                 requestMethod = "POST"
                 setRequestProperty("Content-Type", "application/json; utf-8")
                 setRequestProperty("Accept", "application/json")
@@ -148,16 +156,21 @@ class GameActivity : AppCompatActivity() {
         t.start()
         t.join()
         if (resCode < 200 || resCode >= 300) {
-            displayError("Error posting values to the server")
+            errorMsg = "Error posting values to the server"
         }
     }
     //
 
     private fun displayError(s: String) {
-        var toast = Toast.makeText(applicationContext, s, Toast.LENGTH_SHORT)
-        toast.show()
-        toast = Toast.makeText(applicationContext, "You may return to the previous screen and reconnect", Toast.LENGTH_SHORT)
-        toast.show()
+        val mHandler = object : Handler(Looper.getMainLooper()) {
+            override fun handleMessage(message: Message?) {
+                var toast = Toast.makeText(applicationContext, s, Toast.LENGTH_SHORT)
+                toast.show()
+                toast = Toast.makeText(applicationContext, "You may return to the previous screen and reconnect", Toast.LENGTH_SHORT)
+                toast.show()
+            }
+        }
+        mHandler.handleMessage(null)
     }
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
