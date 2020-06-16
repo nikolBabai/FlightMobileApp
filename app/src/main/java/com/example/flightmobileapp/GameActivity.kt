@@ -2,7 +2,9 @@ package com.example.flightmobileapp
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.*
+import android.os.AsyncTask
+import android.os.Build
+import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -25,17 +27,8 @@ import kotlin.properties.Delegates
 class GameActivity : AppCompatActivity() {
     private var command: Command = Command()
     private var isDestroy : Boolean = false
-    var errorMsg: String by Delegates.observable("") { _, _, newValue ->
+    private var error: String by Delegates.observable("") { property, oldValue, newValue ->
         displayError(newValue)
-    }
-    private val timer: CountDownTimer = object : CountDownTimer(10000, 1000) {
-        override fun onTick(millisUntilFinished: Long) {
-        }
-
-        override fun onFinish() {
-            throw Exception("Server Timeout!")
-        }
-
     }
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
@@ -48,17 +41,14 @@ class GameActivity : AppCompatActivity() {
          Thread {
              val db = AppDB.getDatabase(this)
              val url = db.urlDao().getById(1).url_string
-             Looper.prepare()
              while (!isDestroy) {
                  try {
                      val imgLoad = ImageLoader(screenshot)
-                     imgLoad.setTimer(timer)
-                     imgLoad.setGame(this)
                      Thread.sleep(1000)
                      imgLoad.execute(url)
                  }
-                 catch (t: Throwable) {
-                     errorMsg = t.toString()
+                 catch (e :Exception) {
+                     error = e.toString()
                  }
              }
          }.start()
@@ -72,30 +62,19 @@ class GameActivity : AppCompatActivity() {
 
     class ImageLoader(imgN: ImageView) : AsyncTask<String, Void, Bitmap>() {
         private var img: ImageView? = imgN
-        private var timer: CountDownTimer? = null
-        private var game: GameActivity? = null
-        fun setTimer(t: CountDownTimer) {
-            timer = t
-        }
 
-        fun setGame(g: GameActivity) {
-            game = g
-        }
         @InternalSerializationApi
-        override fun doInBackground(vararg params: String?): Bitmap? {
+        override fun doInBackground(vararg params: String?): Bitmap {
             val url = params[0] + "/screenshot"
-            return try {
+            try {
                 val inStream = URL(url).openStream() as InputStream
-                timer?.start()
-                val screenshot = BitmapFactory.decodeStream(inStream)
-                timer?.cancel()
-                screenshot
-            } catch (e: Exception) {
-                game?.errorMsg = e.toString()
-                null
-            } catch (t: Throwable){
-                game?.errorMsg = t.toString()
-                null
+                return BitmapFactory.decodeStream(inStream)
+            }
+            catch (e: Exception) {
+                throw e
+            }
+            catch (t: Throwable){
+                throw t
             }
         }
 
@@ -112,6 +91,10 @@ class GameActivity : AppCompatActivity() {
         println("isDestroy: $isDestroy")
         super.onDestroy()
     }
+
+    private fun ChangeScreenShot() {
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun sendCommand() {
@@ -140,7 +123,6 @@ class GameActivity : AppCompatActivity() {
             urlObj.openConnection().let {
                 it as HttpURLConnection
             }.apply {
-                connectTimeout = 10000
                 requestMethod = "POST"
                 setRequestProperty("Content-Type", "application/json; utf-8")
                 setRequestProperty("Accept", "application/json")
@@ -156,28 +138,22 @@ class GameActivity : AppCompatActivity() {
         t.start()
         t.join()
         if (resCode < 200 || resCode >= 300) {
-            errorMsg = "Error posting values to the server"
+            error = "Error posting values to the server"
         }
     }
     //
 
     private fun displayError(s: String) {
-        val mHandler = object : Handler(Looper.getMainLooper()) {
-            override fun handleMessage(message: Message?) {
-                var toast = Toast.makeText(applicationContext, s, Toast.LENGTH_SHORT)
-                toast.show()
-                toast = Toast.makeText(applicationContext, "You may return to the previous screen and reconnect", Toast.LENGTH_SHORT)
-                toast.show()
-            }
-        }
-        mHandler.handleMessage(null)
+        var toast = Toast.makeText(applicationContext, s, Toast.LENGTH_SHORT)
+        toast.show()
+        toast = Toast.makeText(applicationContext, "You may return to the previous screen and reconnect", Toast.LENGTH_SHORT)
+        toast.show()
     }
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun setJoystick() {
         val joystick = joystickView_right
         joystick.setOnMoveListener { angle, strength ->
-            var c = Command()
             val x = cos(Math.toRadians(angle.toDouble()))*strength/100
             val y = sin(Math.toRadians(angle.toDouble()))*strength/100
             val xVal = findViewById<TextView>(R.id.aileronVal)
@@ -198,7 +174,6 @@ class GameActivity : AppCompatActivity() {
         // Rudder Slider
         val min = -1.0
         val max = 1.0
-        val total = 0
 
         sliderRudder.bubbleText = "0"
         sliderRudder.positionListener = {pos ->
@@ -217,7 +192,6 @@ class GameActivity : AppCompatActivity() {
         // Slider
         val min2 = 0
         val max2 = 1.0
-        val total2 = 0
 
         sliderThrottle.bubbleText = "0"
         sliderThrottle.position = 0.0F
