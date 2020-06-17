@@ -1,16 +1,23 @@
 package com.example.flightmobileapp
+import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
+import android.os.SystemClock.sleep
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.game_activity.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.io.InputStream
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
@@ -24,13 +31,34 @@ import kotlin.math.sin
 import kotlin.properties.Delegates
 
 
+@RequiresApi(Build.VERSION_CODES.N)
 class GameActivity : AppCompatActivity() {
     private var command: Command = Command()
     private var isDestroy : Boolean = false
-    private var error: String by Delegates.observable("") { property, oldValue, newValue ->
-        displayError(newValue)
+    var errorMsg: String by Delegates.observable("") { _, _, newValue ->
+        val r = GlobalScope.async {
+            if (!errQue.checkOldError(newValue)) {
+                errQue.addError(newValue)
+                errQue.addOldError(newValue)
+            }
+        }
+        r.start()
+    }
+    private var mainT: Thread? = null
+    private var queueJ: Job? = null
+    private var m: Boolean = true
+    private val errQue: ErrorQueue = ErrorQueue()
+
+    private val timer: CountDownTimer = object : CountDownTimer(10000, 1000) {
+        override fun onTick(millisUntilFinished: Long) {
+        }
+
+        override fun onFinish() {
+            throw Exception("Server Timeout!")
+        }
     }
 
+    @SuppressLint("NewApi")
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     override fun onCreate(savedInstanceState: Bundle?) {
         println("isDestroy: $isDestroy")
@@ -38,20 +66,35 @@ class GameActivity : AppCompatActivity() {
         setContentView(R.layout.game_activity)
         setSliders()
         setJoystick()
-         Thread {
-             val db = AppDB.getDatabase(this)
-             val url = db.urlDao().getById(1).url_string
-             while (!isDestroy) {
-                 try {
-                     val imgLoad = ImageLoader(screenshot)
-                     Thread.sleep(1000)
-                     imgLoad.execute(url)
-                 }
-                 catch (e :Exception) {
-                     error = e.toString()
-                 }
-             }
-         }.start()
+        mainT = Thread {
+            val db = AppDB.getDatabase(this)
+            val url = db.urlDao().getById(1).url_string
+            println("is destroy : $isDestroy")
+            while (!isDestroy) {
+                try {
+                    val imgLoad = ImageLoader(screenshot)
+                    imgLoad.setTimer(timer)
+                    imgLoad.setGame(this)
+                    Thread.sleep(1000)
+                    imgLoad.execute(url)
+                }
+                catch (t: Throwable) {
+                    errorMsg = t.toString()
+                }
+            }
+        }
+        mainT?.start()
+        val t = this
+        queueJ = GlobalScope.launch {
+            while(!isDestroy) {
+                errQue.isEmpty()
+                println(errQue.size)
+                val err = errQue.popError()
+                displayError(err, t)
+                sleep(2000)
+            }
+        }
+        queueJ?.start()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -62,19 +105,31 @@ class GameActivity : AppCompatActivity() {
 
     class ImageLoader(imgN: ImageView) : AsyncTask<String, Void, Bitmap>() {
         private var img: ImageView? = imgN
+        private var timer: CountDownTimer? = null
+        private var game: GameActivity? = null
+        fun setTimer(t: CountDownTimer) {
+            timer = t
+        }
+
+        fun setGame(g: GameActivity) {
+            game = g
+        }
 
         @InternalSerializationApi
-        override fun doInBackground(vararg params: String?): Bitmap {
+        override fun doInBackground(vararg params: String?): Bitmap? {
             val url = params[0] + "/screenshot"
-            try {
+            return try {
                 val inStream = URL(url).openStream() as InputStream
-                return BitmapFactory.decodeStream(inStream)
-            }
-            catch (e: Exception) {
-                throw e
-            }
-            catch (t: Throwable){
-                throw t
+                timer?.start()
+                val screenshot = BitmapFactory.decodeStream(inStream)
+                timer?.cancel()
+                screenshot
+            } catch (e: Exception) {
+                game?.errorMsg = e.toString()
+                null
+            } catch (t: Throwable){
+                game?.errorMsg = t.toString()
+                null
             }
         }
 
@@ -88,32 +143,47 @@ class GameActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         isDestroy = true
-        println("isDestroy: $isDestroy")
+        mainT?.join()
+        queueJ?.cancel()
+        println("Joined + isDestroy: $isDestroy")
         super.onDestroy()
     }
 
-    private fun ChangeScreenShot() {
-    }
-
-
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun sendCommand() {
+        GlobalScope.async {
+            sender()
+        }.start()
+    }
+
+    @SuppressLint("NewApi")
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    private suspend fun sender() {
+        while(!m) {
+            Thread.sleep(200)
+        }
+        m = false
         try {
             if (command.checkIfChanged()) {
                 val json = Json(JsonConfiguration.Stable)
                 val res = json.parseJson(command.toString());
                 POST(res)
             }
-        }
-        catch (e: Exception) {
-            displayError(e.toString())
+        } catch (e: Exception) {
+            val err = e.toString()
+            if (!errQue.checkOldError(err)) {
+                errQue.addError(err)
+                errQue.addOldError(err)
+            }
         } finally {
+            m = true
             command.changedChangeBack()
         }
     }
 
+    @SuppressLint("NewApi")
     @RequiresApi(Build.VERSION_CODES.KITKAT)
-    private fun POST(res: JsonElement) {
+    private suspend fun POST(res: JsonElement) {
         var resCode = 0
         val t = Thread {
             val db = AppDB.getDatabase(this)
@@ -123,6 +193,7 @@ class GameActivity : AppCompatActivity() {
             urlObj.openConnection().let {
                 it as HttpURLConnection
             }.apply {
+                connectTimeout = 10000
                 requestMethod = "POST"
                 setRequestProperty("Content-Type", "application/json; utf-8")
                 setRequestProperty("Accept", "application/json")
@@ -138,18 +209,24 @@ class GameActivity : AppCompatActivity() {
         t.start()
         t.join()
         if (resCode < 200 || resCode >= 300) {
-            error = "Error posting values to the server"
+            val err = "Error posting values to the server"
+            if (!errQue.checkOldError(err)) {
+                errQue.addError(err)
+                errQue.addOldError(err)
+            }
         }
     }
-    //
 
-    private fun displayError(s: String) {
-        var toast = Toast.makeText(applicationContext, s, Toast.LENGTH_SHORT)
-        toast.show()
-        toast = Toast.makeText(applicationContext, "You may return to the previous screen and reconnect", Toast.LENGTH_SHORT)
-        toast.show()
+    private fun displayError(s: String, c: GameActivity) {
+        val print  = "$s\nYou may return to the previous screen and reconnect"
+        val r = Runnable {
+            val toast = Toast.makeText(applicationContext, print, Toast.LENGTH_SHORT)
+            toast.show()
+        }
+        c.runOnUiThread(r)
     }
 
+    @SuppressLint("NewApi")
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun setJoystick() {
         val joystick = joystickView_right
@@ -169,6 +246,7 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("NewApi")
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun setSliders() {
         // Rudder Slider
@@ -207,4 +285,3 @@ class GameActivity : AppCompatActivity() {
         sliderThrottle.endText = "$max2"
     }
 }
-
