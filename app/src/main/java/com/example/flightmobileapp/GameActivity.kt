@@ -31,6 +31,7 @@ import kotlin.math.sin
 import kotlin.properties.Delegates
 
 
+//@RequiresApi(Build.VERSION_CODES.N)
 @RequiresApi(Build.VERSION_CODES.N)
 class GameActivity : AppCompatActivity() {
     private var command: Command = Command()
@@ -52,16 +53,14 @@ class GameActivity : AppCompatActivity() {
     private val timer: CountDownTimer = object : CountDownTimer(10000, 1000) {
         override fun onTick(millisUntilFinished: Long) {
         }
-
         override fun onFinish() {
             throw Exception("Server Timeout!")
         }
     }
 
-    @SuppressLint("NewApi")
-    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    //@SuppressLint("NewApi")
+    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     override fun onCreate(savedInstanceState: Bundle?) {
-        println("isDestroy: $isDestroy")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.game_activity)
         setSliders()
@@ -69,16 +68,10 @@ class GameActivity : AppCompatActivity() {
         mainT = Thread {
             val db = AppDB.getDatabase(this)
             val url = db.urlDao().getById(1).url_string
-            println("is destroy : $isDestroy")
             while (!isDestroy) {
                 try {
-                    val imgLoad = ImageLoader(screenshot)
-                    imgLoad.setTimer(timer)
-                    imgLoad.setGame(this)
-                    Thread.sleep(1000)
-                    imgLoad.execute(url)
-                }
-                catch (t: Throwable) {
+                    displayScreenshot(url)
+                } catch (t: Throwable) {
                     errorMsg = t.toString()
                 }
             }
@@ -95,6 +88,14 @@ class GameActivity : AppCompatActivity() {
             }
         }
         queueJ?.start()
+    }
+
+    private fun displayScreenshot(url: String) {
+        val imgLoad = ImageLoader(screenshot)
+        imgLoad.setTimer(timer)
+        imgLoad.setGame(this)
+        Thread.sleep(1000)
+        imgLoad.execute(url)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -149,15 +150,15 @@ class GameActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun sendCommand() {
         GlobalScope.async {
             sender()
         }.start()
     }
 
-    @SuppressLint("NewApi")
-    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    //@SuppressLint("NewApi")
+    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private suspend fun sender() {
         while(!m) {
             Thread.sleep(200)
@@ -181,8 +182,8 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("NewApi")
-    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    //@SuppressLint("NewApi")
+    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private suspend fun POST(res: JsonElement) {
         var resCode = 0
         val t = Thread {
@@ -226,8 +227,8 @@ class GameActivity : AppCompatActivity() {
         c.runOnUiThread(r)
     }
 
-    @SuppressLint("NewApi")
-    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    //@SuppressLint("NewApi")
+    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun setJoystick() {
         val joystick = joystickView_right
         joystick.setOnMoveListener { angle, strength ->
@@ -246,8 +247,8 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("NewApi")
-    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    //@SuppressLint("NewApi")
+    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun setSliders() {
         // Rudder Slider
         val min = -1.0

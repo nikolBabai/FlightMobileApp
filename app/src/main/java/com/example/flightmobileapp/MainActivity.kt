@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.game_activity.*
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -19,6 +20,10 @@ class MainActivity : AppCompatActivity() {
     private fun createApp(savedInstanceState: Bundle?) {
         setContentView(R.layout.activity_main)
         val db = AppDB.getDatabase(this)
+        Thread {
+        db.urlDao().readUrl().forEach() {
+            //db.urlDao().deleteUrl(it)
+        }}.start()
         // Set urls in buttons
         val t2 = Thread {
             setUrls(db)
@@ -60,6 +65,12 @@ class MainActivity : AppCompatActivity() {
             val url1 = URL(url)
             val con = url1.openConnection() as HttpURLConnection
             con.disconnect()
+            // Trying to get  screenshot to check if there is a connection.
+            //val imgLoad = GameActivity.ImageLoader(screenshot)
+
+           // imgLoad.setTimer(null)
+            //imgLoad.setGame(intent)
+            //imgLoad.execute(url)
             return true
         } catch (exception: Exception) {
             val toast = Toast.makeText(applicationContext, "No connection", Toast.LENGTH_SHORT)
@@ -150,6 +161,7 @@ class MainActivity : AppCompatActivity() {
         if (n > 0) {
             val button = findViewById<Button>(R.id.localHost1)
             if ( db.urlDao().getById(1).url_string != "") {
+                val check = db.urlDao().getById(1)
                 button.text = db.urlDao().getById(1).url_string
             }
         }
@@ -179,7 +191,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun String.toEditable(): Editable =  Editable.Factory.getInstance().newEditable(this)
+    private fun String.toEditable(): Editable =  Editable.Factory.getInstance().newEditable(this)
 
 
 }
