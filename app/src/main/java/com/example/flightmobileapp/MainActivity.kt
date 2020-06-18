@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         val db = AppDB.getDatabase(this)
         Thread {
         db.urlDao().readUrl().forEach() {
-            //db.urlDao().deleteUrl(it)
+            ///db.urlDao().deleteUrl(it)
         }}.start()
         // Set urls in buttons
         val t2 = Thread {

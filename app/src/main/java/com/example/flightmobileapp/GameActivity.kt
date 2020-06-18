@@ -71,7 +71,6 @@ class GameActivity : AppCompatActivity() {
             // Return to the login activity.
             isDestroy = true
             screenShotSuccess = false
-            //super.onBackPressed();
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
