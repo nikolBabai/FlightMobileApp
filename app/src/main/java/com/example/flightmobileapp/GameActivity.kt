@@ -1,4 +1,5 @@
 package com.example.flightmobileapp
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -25,8 +26,6 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.properties.Delegates
 
-
-//@RequiresApi(Build.VERSION_CODES.N)
 @RequiresApi(Build.VERSION_CODES.N)
 class GameActivity : AppCompatActivity() {
     private var command: Command = Command()
@@ -45,7 +44,6 @@ class GameActivity : AppCompatActivity() {
     private var queueJ: Job? = null
     private var m: Boolean = true
     private val errQue: ErrorQueue = ErrorQueue()
-
     private val timer: CountDownTimer = object : CountDownTimer(10000, 1000) {
         override fun onTick(millisUntilFinished: Long) {
         }
@@ -54,31 +52,38 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    //@SuppressLint("NewApi")
-    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     @InternalSerializationApi
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        var screenShotSuccess = true
         var start = null as Bitmap?
         try {
             val db = AppDB.getDatabase(this)
-            var url = db.urlDao().getById(1).url_string
+            val url = db.urlDao().getById(1).url_string
             val inStream = URL(url).openStream() as InputStream
             timer.start()
+            // Get screenshot from the server to check connection.
             start = BitmapFactory.decodeStream(inStream)
             timer.cancel()
         }
         catch (e: Exception) {
-            displayError("Error with getting picture from server", this)
-            super.onBackPressed();
+            displayError("Error with getting picture from server", this, false)
+            // Return to the login activity.
+            isDestroy = true
+            screenShotSuccess = false
+            //super.onBackPressed();
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
         }
-
-        super.onCreate(savedInstanceState)
-        startingBitmap = start
-        setContentView(R.layout.game_activity)
-        setSliders()
-        setJoystick()
-        startMainThread()
-        startQueueCoroutine()
+        if (screenShotSuccess) {
+            startingBitmap = start
+            // Only if we don't need to return to the main activity.
+            setContentView(R.layout.game_activity)
+            setSliders()
+            setJoystick()
+            startMainThread()
+            startQueueCoroutine()
+        }
     }
 
     private fun startQueueCoroutine() {
@@ -88,7 +93,7 @@ class GameActivity : AppCompatActivity() {
                 errQue.isEmpty()
                 println(errQue.size)
                 val err = errQue.popError()
-                displayError(err, t)
+                displayError(err, t, true)
                 SystemClock.sleep(2000)
             }
         }
@@ -174,19 +179,15 @@ class GameActivity : AppCompatActivity() {
         isDestroy = true
         mainT?.join()
         queueJ?.cancel()
-        println("Joined + isDestroy: $isDestroy")
         super.onDestroy()
     }
 
-    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun sendCommand() {
         GlobalScope.async {
             sender()
         }.start()
     }
 
-    //@SuppressLint("NewApi")
-    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private suspend fun sender() {
         while(!m) {
             Thread.sleep(200)
@@ -210,8 +211,6 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    //@SuppressLint("NewApi")
-    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private suspend fun post(res: JsonElement) {
         var resCode = 0
         val t = Thread {
@@ -246,8 +245,11 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    private fun displayError(s: String, c: GameActivity) {
-        val print  = "$s\nYou may return to the previous screen and reconnect"
+    private fun displayError(s: String, c: GameActivity, addMessage: Boolean) {
+        var print = s
+        if (addMessage) {
+            print = "$s\nYou may return to the previous screen and reconnect"
+        }
         val r = Runnable {
             val toast = Toast.makeText(applicationContext, print, Toast.LENGTH_SHORT)
             toast.show()
@@ -255,8 +257,6 @@ class GameActivity : AppCompatActivity() {
         c.runOnUiThread(r)
     }
 
-    //@SuppressLint("NewApi")
-    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun setJoystick() {
         val joystick = joystickView_right
         joystick.setOnMoveListener { angle, strength ->
@@ -275,8 +275,6 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    //@SuppressLint("NewApi")
-    //@RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun setSliders() {
         // Rudder Slider
         val min = -1.0

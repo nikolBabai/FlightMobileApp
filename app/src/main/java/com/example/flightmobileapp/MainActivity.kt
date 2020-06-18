@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }else {
                 // Enter again to this activity so the buttons will be updated.
-                finish();
+                finish()
                 startActivity(intent);
             }
         }
@@ -69,12 +69,6 @@ class MainActivity : AppCompatActivity() {
             val url1 = URL(url)
             val con = url1.openConnection() as HttpURLConnection
             con.disconnect()
-            // Trying to get  screenshot to check if there is a connection.
-            //val imgLoad = GameActivity.ImageLoader(screenshot)
-
-           // imgLoad.setTimer(null)
-            //imgLoad.setGame(intent)
-            //imgLoad.execute(url)
             return true
         } catch (exception: Exception) {
             val toast = Toast.makeText(applicationContext, "No connection", Toast.LENGTH_SHORT)
@@ -132,9 +126,6 @@ class MainActivity : AppCompatActivity() {
                 db.urlDao().deleteUrl(it)
                 it.url_location += 1
                 db.urlDao().saveUrl(it)
-            }
-            if (it.url_location == location) {
-                db.urlDao().deleteUrl(it)
             }
         }
     }
