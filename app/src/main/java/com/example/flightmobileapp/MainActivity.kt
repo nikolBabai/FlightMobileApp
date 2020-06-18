@@ -2,21 +2,24 @@ package com.example.flightmobileapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.text.Editable
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.game_activity.*
+import kotlinx.serialization.InternalSerializationApi
 import java.net.HttpURLConnection
 import java.net.URL
 
 class MainActivity : AppCompatActivity() {
+    @InternalSerializationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createApp(savedInstanceState)
     }
 
+    @InternalSerializationApi
     private fun createApp(savedInstanceState: Bundle?) {
         setContentView(R.layout.activity_main)
         val db = AppDB.getDatabase(this)
@@ -40,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         setConnectionButton(db, savedInstanceState)
     }
 
+    @InternalSerializationApi
     private fun setConnectionButton(db: AppDB, savedInstanceState: Bundle?) {
         val connectButton = findViewById<Button>(R.id.connectButton)
         connectButton.setOnClickListener {
@@ -50,9 +54,9 @@ class MainActivity : AppCompatActivity() {
                 thread.join()
             }
             if (checkConnection(typeUrl.text.toString())) {
-            val intent = Intent(this, GameActivity::class.java)
-            startActivity(intent)
-            } else {
+                val intent = Intent(this, GameActivity::class.java)
+                startActivity(intent)
+            }else {
                 // Enter again to this activity so the buttons will be updated.
                 finish();
                 startActivity(intent);

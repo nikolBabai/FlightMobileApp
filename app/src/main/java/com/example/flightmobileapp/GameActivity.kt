@@ -1,13 +1,8 @@
 package com.example.flightmobileapp
-import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.AsyncTask
-import android.os.Build
-import android.os.Bundle
-import android.os.CountDownTimer
-import android.os.SystemClock.sleep
+import android.os.*
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -36,6 +31,7 @@ import kotlin.properties.Delegates
 class GameActivity : AppCompatActivity() {
     private var command: Command = Command()
     private var isDestroy : Boolean = false
+    private var startingBitmap: Bitmap? = null
     var errorMsg: String by Delegates.observable("") { _, _, newValue ->
         val r = GlobalScope.async {
             if (!errQue.checkOldError(newValue)) {
@@ -60,11 +56,46 @@ class GameActivity : AppCompatActivity() {
 
     //@SuppressLint("NewApi")
     //@RequiresApi(Build.VERSION_CODES.KITKAT)
+    @InternalSerializationApi
     override fun onCreate(savedInstanceState: Bundle?) {
+        var start = null as Bitmap?
+        try {
+            val db = AppDB.getDatabase(this)
+            var url = db.urlDao().getById(1).url_string
+            val inStream = URL(url).openStream() as InputStream
+            timer.start()
+            start = BitmapFactory.decodeStream(inStream)
+            timer.cancel()
+        }
+        catch (e: Exception) {
+            displayError("Error with getting picture from server", this)
+            super.onBackPressed();
+        }
+
         super.onCreate(savedInstanceState)
+        startingBitmap = start
         setContentView(R.layout.game_activity)
         setSliders()
         setJoystick()
+        startMainThread()
+        startQueueCoroutine()
+    }
+
+    private fun startQueueCoroutine() {
+        val t = this
+        queueJ = GlobalScope.launch {
+            while(!isDestroy) {
+                errQue.isEmpty()
+                println(errQue.size)
+                val err = errQue.popError()
+                displayError(err, t)
+                SystemClock.sleep(2000)
+            }
+        }
+        queueJ?.start()
+    }
+
+    private fun startMainThread() {
         mainT = Thread {
             val db = AppDB.getDatabase(this)
             val url = db.urlDao().getById(1).url_string
@@ -77,23 +108,13 @@ class GameActivity : AppCompatActivity() {
             }
         }
         mainT?.start()
-        val t = this
-        queueJ = GlobalScope.launch {
-            while(!isDestroy) {
-                errQue.isEmpty()
-                println(errQue.size)
-                val err = errQue.popError()
-                displayError(err, t)
-                sleep(2000)
-            }
-        }
-        queueJ?.start()
     }
 
     private fun displayScreenshot(url: String) {
         val imgLoad = ImageLoader(screenshot)
         imgLoad.setTimer(timer)
         imgLoad.setGame(this)
+        imgLoad.setImg(startingBitmap as Bitmap)
         Thread.sleep(1000)
         imgLoad.execute(url)
     }
@@ -106,6 +127,7 @@ class GameActivity : AppCompatActivity() {
 
     class ImageLoader(imgN: ImageView) : AsyncTask<String, Void, Bitmap>() {
         private var img: ImageView? = imgN
+        private var bitImg: Bitmap? = null
         private var timer: CountDownTimer? = null
         private var game: GameActivity? = null
         fun setTimer(t: CountDownTimer) {
@@ -116,6 +138,10 @@ class GameActivity : AppCompatActivity() {
             game = g
         }
 
+        fun setImg(i: Bitmap) {
+            bitImg = i
+        }
+
         @InternalSerializationApi
         override fun doInBackground(vararg params: String?): Bitmap? {
             val url = params[0] + "/screenshot"
@@ -124,7 +150,9 @@ class GameActivity : AppCompatActivity() {
                 timer?.start()
                 val screenshot = BitmapFactory.decodeStream(inStream)
                 timer?.cancel()
-                screenshot
+                val prev = bitImg
+                bitImg = screenshot
+                prev
             } catch (e: Exception) {
                 game?.errorMsg = e.toString()
                 null
@@ -168,7 +196,7 @@ class GameActivity : AppCompatActivity() {
             if (command.checkIfChanged()) {
                 val json = Json(JsonConfiguration.Stable)
                 val res = json.parseJson(command.toString());
-                POST(res)
+                post(res)
             }
         } catch (e: Exception) {
             val err = e.toString()
@@ -184,7 +212,7 @@ class GameActivity : AppCompatActivity() {
 
     //@SuppressLint("NewApi")
     //@RequiresApi(Build.VERSION_CODES.KITKAT)
-    private suspend fun POST(res: JsonElement) {
+    private suspend fun post(res: JsonElement) {
         var resCode = 0
         val t = Thread {
             val db = AppDB.getDatabase(this)
