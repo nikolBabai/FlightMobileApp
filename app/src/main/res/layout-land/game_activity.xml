@@ -19,13 +19,13 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="436dp"
-        android:layout_marginRight="436dp"
-        android:rotation="90"
+        android:rotation="0"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.255"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.468" />
+        app:layout_constraintVertical_bias="0.861" />
 
     <io.github.controlwear.virtual.joystick.android.JoystickView
         android:id="@+id/joystickView_right"
@@ -58,19 +58,20 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
+        android:layout_marginEnd="444dp"
+        android:layout_marginRight="444dp"
+        android:rotation="90"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.239"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.833" />
+        app:layout_constraintVertical_bias="0.39" />
 
     <TextView
         android:id="@+id/textView2"
         android:layout_width="86dp"
         android:layout_height="33dp"
         android:fontFamily="casual"
-        android:text="@string/Throttle"
+        android:text="@string/Rudder"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -86,7 +87,7 @@
         android:layout_height="43dp"
         android:fontFamily="casual"
         android:rotation="90"
-        android:text="@string/Rudder"
+        android:text="@string/Throttle"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -98,17 +99,17 @@
 
     <ImageView
         android:id="@+id/screenshot"
-        android:layout_width="367dp"
-        android:layout_height="318dp"
+        android:layout_width="336dp"
+        android:layout_height="278dp"
         android:contentDescription="@string/screenshot"
+        android:src="@drawable/ic_launcher_foreground"
         android:text="@string/screenshot"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0"
-        android:src="@drawable/ic_launcher_foreground" />
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/textView5"
@@ -120,10 +121,10 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="@+id/joystickView_right"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.225"
+        app:layout_constraintHorizontal_bias="0.105"
         app:layout_constraintStart_toEndOf="@+id/textView3"
         app:layout_constraintTop_toTopOf="@+id/screenshot"
-        app:layout_constraintVertical_bias="0.176" />
+        app:layout_constraintVertical_bias="0.156" />
 
     <TextView
         android:id="@+id/elevatorVal"
@@ -135,9 +136,9 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="@+id/joystickView_right"
         app:layout_constraintEnd_toStartOf="@+id/textView5"
-        app:layout_constraintHorizontal_bias="0.815"
+        app:layout_constraintHorizontal_bias="0.017"
         app:layout_constraintStart_toEndOf="@+id/textView3"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView7"
         app:layout_constraintVertical_bias="0.0" />
 
     <TextView
@@ -150,7 +151,7 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@+id/textView5"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.237"
+        app:layout_constraintHorizontal_bias="0.105"
         app:layout_constraintStart_toEndOf="@+id/textView3"
         app:layout_constraintTop_toTopOf="@+id/screenshot"
         app:layout_constraintVertical_bias="0.0" />
@@ -165,9 +166,9 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@+id/elevatorVal"
         app:layout_constraintEnd_toStartOf="@+id/textView7"
-        app:layout_constraintHorizontal_bias="0.724"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/textView3"
-        app:layout_constraintTop_toBottomOf="@+id/elevatorVal"
+        app:layout_constraintTop_toTopOf="@+id/textView7"
         app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

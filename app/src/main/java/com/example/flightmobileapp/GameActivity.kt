@@ -3,7 +3,9 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.hardware.SensorManager
 import android.os.*
+import android.view.OrientationEventListener
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -20,6 +22,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonElement
 import java.net.HttpURLConnection
+import java.net.SocketException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import kotlin.math.cos
@@ -43,46 +46,116 @@ class GameActivity : AppCompatActivity() {
     private var mainT: Thread? = null
     private var queueJ: Job? = null
     private var m: Boolean = true
+    private var mOrientationListener: OrientationEventListener? = null
     private val errQue: ErrorQueue = ErrorQueue()
     private val timer: CountDownTimer = object : CountDownTimer(10000, 1000) {
-        override fun onTick(millisUntilFinished: Long) {
-        }
         override fun onFinish() {
-            throw Exception("Server Timeout!")
+            errorMsg = "Server Timeout!"
+        }
+
+        override fun onTick(millisUntilFinished: Long) {
+            println("Countdown:$millisUntilFinished")
         }
     }
+    private val timer2: CountDownTimer = object : CountDownTimer(10000, 1000) {
+        override fun onFinish() {
+            errorMsg = "Server Timeout!"
+        }
+
+        override fun onTick(millisUntilFinished: Long) {
+            println("Countdown:$millisUntilFinished")
+        }
+    }
+    private var firstImg: Boolean = true
+    private var oriented: Boolean = false
+    private var currOri: Int = -1
 
     @InternalSerializationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        var screenShotSuccess = true
-        var start = null as Bitmap?
-        try {
-            val db = AppDB.getDatabase(this)
-            val url = db.urlDao().getById(1).url_string
-            val inStream = URL(url).openStream() as InputStream
-            timer.start()
-            // Get screenshot from the server to check connection.
-            start = BitmapFactory.decodeStream(inStream)
-            timer.cancel()
+        val start = getFirstScreenshot()
+        if (start != null) {
+            startingBitmap = start
+            // Only if we don't need to return to the main activity.
+            startMyApp()
+            mOrientationListener = object : OrientationEventListener(
+                this,
+                SensorManager.SENSOR_DELAY_NORMAL
+            ) {
+                private var firstTime: Boolean = true
+                override fun onOrientationChanged(orientation: Int) {
+                    if (!firstTime && currOri != orientation) {
+                        oriented = true
+                    }
+                    else {
+                        currOri = orientation
+                        firstTime = false
+                    }
+                }
+            }
+            mOrientationListener?.enable()
         }
-        catch (e: Exception) {
+    }
+
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (newConfig.orientation ==
+            Configuration.ORIENTATION_LANDSCAPE
+        ) {
+            setContentView(R.layout.game_activity)
+        } else if (newConfig.orientation ==
+            Configuration.ORIENTATION_PORTRAIT
+        ) {
+            setContentView(R.layout.game_activity)
+        }
+    }
+    private fun startMyApp() {
+        setContentView(R.layout.game_activity)
+        setSliders()
+        setJoystick()
+        startMainThread()
+        startQueueCoroutine()
+    }
+
+    @InternalSerializationApi
+    private fun getFirstScreenshot(): Bitmap? {
+        return try {
+            realyGetTheScreenshot()
+        } catch (e: Exception) {
             displayError("Error with getting picture from server", this, false)
             // Return to the login activity.
             isDestroy = true
-            screenShotSuccess = false
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
+            null
         }
-        if (screenShotSuccess) {
-            startingBitmap = start
-            // Only if we don't need to return to the main activity.
-            setContentView(R.layout.game_activity)
-            setSliders()
-            setJoystick()
-            startMainThread()
-            startQueueCoroutine()
+    }
+
+    @InternalSerializationApi
+    private fun realyGetTheScreenshot(): Bitmap? {
+        var exc = null as Exception?
+        var start = null as Bitmap?
+        val t = Thread {
+            try {
+                var url = intent.getStringExtra("URL") ?: return@Thread
+                url = "$url/screenshot"
+                val inStream = URL(url).openStream() as InputStream
+                timer.start()
+                // Get screenshot from the server to check connection.
+                start = BitmapFactory.decodeStream(inStream)
+                timer.cancel()
+            }
+            catch (e: Exception) {
+                exc = e
+            }
         }
+        t.start()
+        t.join()
+        if (exc != null) {
+            throw exc as Exception
+        }
+        return start
     }
 
     private fun startQueueCoroutine() {
@@ -103,68 +176,88 @@ class GameActivity : AppCompatActivity() {
         mainT = Thread {
             val db = AppDB.getDatabase(this)
             val url = db.urlDao().getById(1).url_string
-            while (!isDestroy) {
-                try {
-                    displayScreenshot(url)
-                } catch (t: Throwable) {
-                    errorMsg = t.toString()
-                }
-            }
+            screenshotGetter(url)
         }
         mainT?.start()
     }
 
-    private fun displayScreenshot(url: String) {
-        val imgLoad = ImageLoader(screenshot)
-        imgLoad.setTimer(timer)
-        imgLoad.setGame(this)
-        imgLoad.setImg(startingBitmap as Bitmap)
-        Thread.sleep(1000)
-        imgLoad.execute(url)
+    private fun screenshotGetter(url: String) {
+        while (!isDestroy) {
+            try {
+                displayScreenshot(url)
+            } catch (t: Throwable) {
+                errorMsg = t.toString()
+            }
+        }
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        // TODO Auto-generated method stub
-        super.onConfigurationChanged(newConfig)
-        setContentView(R.layout.game_activity)
+    private fun displayScreenshot(url: String) {
+        val imgLoad = ImageLoader(screenshot)
+        imgLoad.setFirstRun(firstImg)
+        if (firstImg) {
+            firstImg = false
+        }
+        imgLoad.setGame(this)
+        imgLoad.setImg(startingBitmap)
+        Thread.sleep(1000)
+        try {
+            timer.start()
+            val r = imgLoad.execute(url)
+            var stat = r.status
+            while (stat == AsyncTask.Status.RUNNING || stat == AsyncTask.Status.PENDING){
+                stat = r.status
+            }
+            timer.cancel()
+        } catch (e:Exception) {
+            errorMsg = e.toString()
+        }
     }
 
     class ImageLoader(imgN: ImageView) : AsyncTask<String, Void, Bitmap>() {
         private var img: ImageView? = imgN
         private var bitImg: Bitmap? = null
-        private var timer: CountDownTimer? = null
         private var game: GameActivity? = null
-        fun setTimer(t: CountDownTimer) {
-            timer = t
-        }
+        private var firstRun: Boolean = true
 
         fun setGame(g: GameActivity) {
             game = g
         }
 
-        fun setImg(i: Bitmap) {
+        fun setImg(i: Bitmap?) {
             bitImg = i
+        }
+
+        fun setFirstRun(b: Boolean) {
+            firstRun = b
         }
 
         @InternalSerializationApi
         override fun doInBackground(vararg params: String?): Bitmap? {
             val url = params[0] + "/screenshot"
             return try {
-                val inStream = URL(url).openStream() as InputStream
-                timer?.start()
-                val screenshot = BitmapFactory.decodeStream(inStream)
-                timer?.cancel()
-                val prev = bitImg
-                bitImg = screenshot
-                prev
+                if (firstRun) {
+                    bitImg
+                }
+                else {
+                    val u = URL(url)
+                    val inStream = u.openStream() as InputStream
+                    val screenshot = BitmapFactory.decodeStream(inStream)
+                    screenshot
+                }
             } catch (e: Exception) {
                 game?.errorMsg = e.toString()
                 null
-            } catch (t: Throwable){
+            } catch (s: SocketException) {
+                game?.errorMsg = s.toString()
+                null
+            }
+            catch (t: Throwable){
                 game?.errorMsg = t.toString()
                 null
             }
         }
+
+
 
         override fun onPostExecute(result: Bitmap?) {
             if (result != null) {
@@ -176,8 +269,11 @@ class GameActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         isDestroy = true
-        mainT?.join()
+        if (!oriented) {
+            mainT?.join()
+        }
         queueJ?.cancel()
+        mOrientationListener?.disable()
         super.onDestroy()
     }
 
@@ -189,7 +285,7 @@ class GameActivity : AppCompatActivity() {
 
     private suspend fun sender() {
         while(!m) {
-            Thread.sleep(200)
+          //  Thread.sleep(200)
         }
         m = false
         try {
@@ -210,17 +306,40 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun post(res: JsonElement) {
+    private fun post(res: JsonElement) {
         var resCode = 0
         val t = Thread {
             val db = AppDB.getDatabase(this)
             val url = db.urlDao().getById(1).url_string + "/api/command"
             val urlObj = URL(url)
+            resCode = postToUrl(urlObj, res)
+        }
+        t.start()
+        t.join()
+        if (resCode < 200 || resCode >= 300) {
+            errorMsg = "Error posting values to the server"
+        }
+    }
 
-            urlObj.openConnection().let {
-                it as HttpURLConnection
-            }.apply {
-                connectTimeout = 10000
+    private fun postToUrl(urlObj: URL, res: JsonElement): Int {
+        var resCode = 0
+        try {
+            timer2.start()
+            resCode = tryToPost(res, urlObj)
+            timer2.cancel()
+        } catch (e: Exception) {
+            errorMsg = e.toString()
+        }
+        finally {
+            return resCode
+        }
+    }
+
+    private fun tryToPost(res: JsonElement, urlObj: URL): Int {
+        urlObj.openConnection().let {
+            it as HttpURLConnection
+        }.apply {
+            try {
                 requestMethod = "POST"
                 setRequestProperty("Content-Type", "application/json; utf-8")
                 setRequestProperty("Accept", "application/json")
@@ -229,18 +348,11 @@ class GameActivity : AppCompatActivity() {
                 val input: ByteArray = dataToSend.toByteArray(StandardCharsets.UTF_8)
                 outputStream.write(input)
                 outputStream.flush()
-            }.let {
-                resCode = it.responseCode
+            } catch (e: Exception) {
+                errorMsg = e.toString()
             }
-        }
-        t.start()
-        t.join()
-        if (resCode < 200 || resCode >= 300) {
-            val err = "Error posting values to the server"
-            if (!errQue.checkOldError(err)) {
-                errQue.addError(err)
-                errQue.addOldError(err)
-            }
+        }.let {
+            return it.responseCode
         }
     }
 
@@ -275,23 +387,11 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun setSliders() {
-        // Rudder Slider
-        val min = -1.0
-        val max = 1.0
+        setRudder()
+        setThrottle()
+    }
 
-        sliderRudder.bubbleText = "0"
-        sliderRudder.positionListener = {pos ->
-            sliderRudder.bubbleText = "%.2f".format(pos * 2 + min)
-            val v = String.format("%.2f", pos * 2 + min).toDouble()
-            command.setRudder(v)
-            if (!isDestroy) {
-                sendCommand()
-            }
-        }
-        sliderRudder.startText = "$min"
-        sliderRudder.endText = "$max"
-
-
+    private fun setThrottle() {
         // Throttle Slider
         // Slider
         val min2 = 0
@@ -309,5 +409,23 @@ class GameActivity : AppCompatActivity() {
         }
         sliderThrottle.startText = "$min2"
         sliderThrottle.endText = "$max2"
+    }
+
+    private fun setRudder() {
+        // Rudder Slider
+        val min = -1.0
+        val max = 1.0
+
+        sliderRudder.bubbleText = "0"
+        sliderRudder.positionListener = {pos ->
+            sliderRudder.bubbleText = "%.2f".format(pos * 2 + min)
+            val v = String.format("%.2f", pos * 2 + min).toDouble()
+            command.setRudder(v)
+            if (!isDestroy) {
+                sendCommand()
+            }
+        }
+        sliderRudder.startText = "$min"
+        sliderRudder.endText = "$max"
     }
 }

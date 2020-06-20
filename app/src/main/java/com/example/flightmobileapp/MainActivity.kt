@@ -1,24 +1,30 @@
 package com.example.flightmobileapp
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.text.Editable
 import android.widget.Button
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.charset.StandardCharsets
 
 class MainActivity : AppCompatActivity() {
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
     @InternalSerializationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createApp(savedInstanceState)
     }
 
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
     @InternalSerializationApi
     private fun createApp(savedInstanceState: Bundle?) {
         setContentView(R.layout.activity_main)
@@ -43,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         setConnectionButton(db, savedInstanceState)
     }
 
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
     @InternalSerializationApi
     private fun setConnectionButton(db: AppDB, savedInstanceState: Bundle?) {
         val connectButton = findViewById<Button>(R.id.connectButton)
@@ -55,8 +62,9 @@ class MainActivity : AppCompatActivity() {
             }
             if (checkConnection(typeUrl.text.toString())) {
                 val intent = Intent(this, GameActivity::class.java)
+                intent.putExtra("URL", typeUrl.text.toString())
                 startActivity(intent)
-            }else {
+            } else {
                 // Enter again to this activity so the buttons will be updated.
                 finish()
                 startActivity(intent);
@@ -64,35 +72,102 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun checkConnection(url: String): Boolean {
         try {
-            val url1 = URL(url)
-            val con = url1.openConnection() as HttpURLConnection
-            con.disconnect()
-            return true
-        } catch (exception: Exception) {
-            val toast = Toast.makeText(applicationContext, "No connection", Toast.LENGTH_SHORT)
-            toast.show()
+            var success = checkPost(url)
+            if (!success) {
+                val toast =
+                    Toast.makeText(
+                        applicationContext,
+                        "Connection Failure!",
+                        Toast.LENGTH_SHORT
+                    )
+                toast.show()
+            }
+            return success
         }
-        return false
+        catch (e: Exception) {
+            val toast =
+                Toast.makeText(
+                    applicationContext,
+                    "Connection Failure!",
+                    Toast.LENGTH_SHORT
+                )
+            toast.show()
+            return false
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    private fun checkPost(url: String): Boolean {
+        var success = true
+        val t = Thread {
+            val url1 = URL("$url/api/command")
+            val res = getCheckJson()
+            url1.openConnection().let {
+                it as HttpURLConnection
+            }.apply {
+                try {
+                    connectTimeout = 10000
+                    requestMethod = "POST"
+                    setRequestProperty("Content-Type", "application/json; utf-8")
+                    setRequestProperty("Accept", "application/json")
+                    doOutput = true
+                    val dataToSend = res.toString()
+                    val input: ByteArray = dataToSend.toByteArray(StandardCharsets.UTF_8)
+                    outputStream.write(input)
+                    outputStream.flush()
+                } catch (e: Exception) {
+                    success = false
+                }
+            }
+        }
+        t.start()
+        t.join()
+        return success
+    }
+
+    private fun getCheckJson(): Any {
+        val json = Json(JsonConfiguration.Stable)
+        return json.parseJson(
+            "{\n" +
+                    " \"aileron\": 0,\n" +
+                    " \"rudder\": 0,\n" +
+                    " \"elevator\": 0,\n" +
+                    " \"throttle\": 0\n" +
+                    "}"
+        );
     }
 
     private fun setListenerLocalHost(db: AppDB, localHostArray: ArrayList<Button>) {
         for (i in 0..4) {
             val button = localHostArray[i]
-            button.setOnClickListener {
-                // Put the correct url in the text box.
-                val t4 = Thread {
-                    db.urlDao().readUrl().forEach() {
-                        if (it.url_location == i + 1) {
-                            // Find the url in the location needed and put it's string in the text box.
-                            typeUrl.text = it.url_string.toEditable()
-                        }
-                    }
+            addButListener(button, i, db)
+
+        }
+}
+
+    private fun addButListener(
+        button: Button,
+        i: Int,
+        db: AppDB) {
+        button.setOnClickListener {
+            // Put the correct url in the text box.
+            val t4 = Thread {
+                db.urlDao().readUrl().forEach() {
+                    changeUrl(it, i)
                 }
-                t4.start()
-                t4.join()
             }
+            t4.start()
+            t4.join()
+        }
+    }
+
+    private fun changeUrl(it: Url_Entity, i: Int) {
+        if (it.url_location == i + 1) {
+            // Find the url in the location needed and put it's string in the text box.
+            typeUrl.text = it.url_string.toEditable()
         }
     }
 
@@ -155,34 +230,23 @@ class MainActivity : AppCompatActivity() {
         val n = db.urlDao().getCount()
         if (n > 0) {
             val button = findViewById<Button>(R.id.localHost1)
-            if ( db.urlDao().getById(1).url_string != "") {
-                val check = db.urlDao().getById(1)
-                button.text = db.urlDao().getById(1).url_string
-            }
+            button.text = db.urlDao().getById(1).url_string
         }
         if (n > 1) {
             val button = findViewById<Button>(R.id.localHost2)
-            if (db.urlDao().getById(2).url_string != "") {
-                button.text = db.urlDao().getById(2).url_string
-            }
+            button.text = db.urlDao().getById(2).url_string
         }
         if (n > 2) {
             val button = findViewById<Button>(R.id.localHost3)
-            if (db.urlDao().getById(3).url_string != "") {
-                button.text = db.urlDao().getById(3).url_string
-            }
+            button.text = db.urlDao().getById(3).url_string
         }
         if (n > 3) {
             val button = findViewById<Button>(R.id.localHost4)
-            if (db.urlDao().getById(4).url_string != "") {
-                button.text = db.urlDao().getById(4).url_string
-            }
+            button.text = db.urlDao().getById(4).url_string
         }
         if (n > 4) {
             val button = findViewById<Button>(R.id.localHost5)
-            if (db.urlDao().getById(5).url_string != "") {
-                button.text = db.urlDao().getById(5).url_string
-            }
+            button.text = db.urlDao().getById(5).url_string
         }
     }
 
