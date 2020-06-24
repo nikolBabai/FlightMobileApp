@@ -74,10 +74,8 @@
         android:text="@string/localHost2"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="@+id/addresses_confirm_root_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.501"
-        app:layout_constraintStart_toStartOf="@+id/addresses_confirm_root_view"
         app:layout_constraintTop_toBottomOf="@+id/localHost1"
         app:layout_constraintVertical_bias="0.011"
         tools:visibility="visible" />
@@ -123,7 +121,6 @@
         android:text="@string/localHost5"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="@+id/addresses_confirm_root_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.499"
         app:layout_constraintStart_toStartOf="parent"

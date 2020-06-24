@@ -1,6 +1,4 @@
 package com.example.flightmobileapp
-
-import kotlinx.serialization.Serializable
 import kotlin.math.abs
 
 class Command {

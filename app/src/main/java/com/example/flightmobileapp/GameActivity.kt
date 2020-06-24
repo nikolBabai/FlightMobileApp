@@ -32,7 +32,7 @@ import kotlin.properties.Delegates
 @RequiresApi(Build.VERSION_CODES.N)
 class GameActivity : AppCompatActivity() {
     private var command: Command = Command()
-    private var isDestroy : Boolean = false
+    private var isDestroy : Int = 0
     private var startingBitmap: Bitmap? = null
     var errorMsg: String by Delegates.observable("") { _, _, newValue ->
         val r = GlobalScope.async {
@@ -48,7 +48,8 @@ class GameActivity : AppCompatActivity() {
     private var m: Boolean = true
     private var mOrientationListener: OrientationEventListener? = null
     private val errQue: ErrorQueue = ErrorQueue()
-    private val timer: CountDownTimer = object : CountDownTimer(10000, 1000) {
+    private val timer: CountDownTimer =
+        object : CountDownTimer(10000, 1000) {
         override fun onFinish() {
             errorMsg = "Server Timeout!"
         }
@@ -57,7 +58,8 @@ class GameActivity : AppCompatActivity() {
             println("Countdown:$millisUntilFinished")
         }
     }
-    private val timer2: CountDownTimer = object : CountDownTimer(10000, 1000) {
+    private val timer2: CountDownTimer =
+        object : CountDownTimer(10000, 1000) {
         override fun onFinish() {
             errorMsg = "Server Timeout!"
         }
@@ -125,7 +127,7 @@ class GameActivity : AppCompatActivity() {
         } catch (e: Exception) {
             displayError("Error with getting picture from server", this, false)
             // Return to the login activity.
-            isDestroy = true
+            isDestroy = 1
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             null
@@ -161,7 +163,7 @@ class GameActivity : AppCompatActivity() {
     private fun startQueueCoroutine() {
         val t = this
         queueJ = GlobalScope.launch {
-            while(!isDestroy) {
+            while(isDestroy == 0) {
                 errQue.isEmpty()
                 println(errQue.size)
                 val err = errQue.popError()
@@ -174,15 +176,14 @@ class GameActivity : AppCompatActivity() {
 
     private fun startMainThread() {
         mainT = Thread {
-            val db = AppDB.getDatabase(this)
-            val url = db.urlDao().getById(1).url_string
-            screenshotGetter(url)
+            val url = intent.getStringExtra("URL")
+            url?.toString()?.let { screenshotGetter(it) }
         }
         mainT?.start()
     }
 
     private fun screenshotGetter(url: String) {
-        while (!isDestroy) {
+        while (isDestroy == 0) {
             try {
                 displayScreenshot(url)
             } catch (t: Throwable) {
@@ -204,7 +205,7 @@ class GameActivity : AppCompatActivity() {
             timer.start()
             val r = imgLoad.execute(url)
             var stat = r.status
-            while (stat == AsyncTask.Status.RUNNING || stat == AsyncTask.Status.PENDING){
+            while (stat != AsyncTask.Status.FINISHED && isDestroy == 0) {
                 stat = r.status
             }
             timer.cancel()
@@ -268,10 +269,8 @@ class GameActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        isDestroy = true
-        if (!oriented) {
-            mainT?.join()
-        }
+        isDestroy = 1
+        mainT?.join()
         queueJ?.cancel()
         mOrientationListener?.disable()
         super.onDestroy()
@@ -291,7 +290,7 @@ class GameActivity : AppCompatActivity() {
         try {
             if (command.checkIfChanged()) {
                 val json = Json(JsonConfiguration.Stable)
-                val res = json.parseJson(command.toString());
+                val res = json.parseJson(command.toString())
                 post(res)
             }
         } catch (e: Exception) {
@@ -309,8 +308,7 @@ class GameActivity : AppCompatActivity() {
     private fun post(res: JsonElement) {
         var resCode = 0
         val t = Thread {
-            val db = AppDB.getDatabase(this)
-            val url = db.urlDao().getById(1).url_string + "/api/command"
+            val url =  intent.getStringExtra("URL")?.toString() + "/api/command"
             val urlObj = URL(url)
             resCode = postToUrl(urlObj, res)
         }
@@ -380,7 +378,7 @@ class GameActivity : AppCompatActivity() {
             println("x: $x y: $y")
             command.setAileron(xVal.text.toString().toDouble())
             command.setElevator(yVal.text.toString().toDouble())
-            if (!isDestroy) {
+            if (isDestroy == 0) {
                 sendCommand()
             }
         }
@@ -403,7 +401,7 @@ class GameActivity : AppCompatActivity() {
             sliderThrottle.bubbleText = "%.2f".format(pos + min2)
             val v = String.format("%.2f", pos).toDouble()
             command.setThrottle(v)
-            if (!isDestroy) {
+            if (isDestroy == 0) {
                 sendCommand()
             }
         }
@@ -421,7 +419,7 @@ class GameActivity : AppCompatActivity() {
             sliderRudder.bubbleText = "%.2f".format(pos * 2 + min)
             val v = String.format("%.2f", pos * 2 + min).toDouble()
             command.setRudder(v)
-            if (!isDestroy) {
+            if (isDestroy == 0) {
                 sendCommand()
             }
         }
